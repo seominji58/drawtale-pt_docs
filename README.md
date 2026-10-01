@@ -46,6 +46,7 @@ AI는 아이가 고른 네 칸을 문장으로 다듬고, 아이 그림을 움�
 |---|---|
 | [presentation/DrawTale_중간발표.pptx](presentation/DrawTale_중간발표.pptx) | 10/2 중간 발표 덱. 공통 영역은 채워 두었고, **개인 슬라이드(PART C)는 각자 채운다** |
 | [presentation/sources.md](presentation/sources.md) | 배경조사(사회 · 교육 · 기술 · 기존 서비스)의 출처 링크 |
+| [presentation/README.md](presentation/README.md) | **덱 작업 안내** — 누가 몇 번 슬라이드를, 디자인 규칙, 고칠 때 주의 |
 
 덱은 `tools/deck/`의 스크립트로 처음 만들었다. 이후 수정은 pptx 파일을 직접 고친다.
 
