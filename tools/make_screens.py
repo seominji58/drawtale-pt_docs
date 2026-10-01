@@ -411,27 +411,27 @@ BEFORE = (448, 318)   # AI 가 잘못 짚었던 자리 (예시)
 
 
 def s06(blank=False):
-    """blank=True 면 ① 칸(캐릭터 그림 · 관절점)만 비운 판. 발표에서 다른 그림을 얹을 때 쓴다."""
+    """blank=True 면 ① 칸에서 캐릭터 그림 · 뼈대 · 나머지 관절점을 비운 판.
+    끌어 옮기는 관절점과 「끌어서 옮기기」 표시만 같은 자리에 남긴다. 발표에서 다른 그림을 얹을 때 쓴다."""
     w = Wire(adult=True, caption=None if blank else "캐릭터 그림: Meta Animated Drawings 예제 char1 (MIT License)")
     w.frame(title="어른이 맞춰 주세요", speech=False,
             acts=[("움직여 보기", "secondary"), ("다 했어요", "primary")])
 
     sx, sy, sw, sh = 24, RAIL + 16, 560, 480
     w.rect(sx, sy, sw, sh, fill=CARD, line=LINE, r=16)
-    if blank:
-        _s06_rest(w, sx, sy, blank=True)
-        return
     src = Image.open(CHAR).convert("RGB")
     scale = min((sw - 24) / src.width, (sh - 24) / src.height)
     iw, ih = int(src.width * scale), int(src.height * scale)
     ox, oy = sx + (sw - iw) / 2, sy + (sh - ih) / 2
-    w.img.paste(src.resize((iw * S, ih * S), Image.LANCZOS), (int((ox + PAD) * S), int((oy + PAD) * S)))
+    if not blank:
+        w.img.paste(src.resize((iw * S, ih * S), Image.LANCZOS), (int((ox + PAD) * S), int((oy + PAD) * S)))
 
     def P(xy):
         return (ox + xy[0] * scale, oy + xy[1] * scale)
 
-    for a, b in BONES:
-        w.line([P(JOINTS[a]), P(JOINTS[b])], "#7386F5", 3)
+    if not blank:
+        for a, b in BONES:
+            w.line([P(JOINTS[a]), P(JOINTS[b])], "#7386F5", 3)
 
     # 끌어 옮기는 중인 관절: 전 자리는 흐린 점선 원, 화살표, 새 자리는 노란 테
     bx, by = P(BEFORE)
@@ -443,12 +443,14 @@ def s06(blank=False):
     w.pill(bx - 20, by + 16, "끌어서 옮기기", 13, True, fill="#FFF4D6", pad=10, h=26)
 
     for name, xy in JOINTS.items():
+        if blank and name != MOVED:
+            continue
         x, y = P(xy)
         if name == MOVED:
             w.circle(x, y, 15, fill="#FFEA99", line="#E5A23B", width=3)
         w.circle(x, y, 8, fill="#FFFFFF", line="#4C5CC4", width=3)
 
-    _s06_rest(w, sx, sy)
+    _s06_rest(w, sx, sy, blank=blank)
 
 
 def _s06_rest(w, sx, sy, blank=False):
