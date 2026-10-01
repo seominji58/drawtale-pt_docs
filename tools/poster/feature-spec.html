@@ -1,0 +1,192 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>DrawTale 기능 정의서</title>
+<!--
+  02-feature-spec.md 를 한 장으로. 누구나 읽을 수 있게 기능 이름은 쉬운 말로, 칸마다 목적 한 줄.
+  상태는 02 문서의 「1. 기능 목록」과 같게 둔다. 문서를 고치면 여기도 고친다.
+-->
+<style>
+  :root {
+    --ink: #20263D; --soft: #4E5570; --faint: #7C8299; --navy: #26306A;
+    --fe: #34A57F; --be: #4256C8; --ai: #8560D6;
+    --done: #2E9D6F; --part: #D9962B; --doing: #2F86D6; --todo: #8A90A3; --talk: #A05CC9;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { width: 1600px; height: 1080px; background: #FFFFFF; color: var(--ink);
+    font-family: "Malgun Gothic", "Apple SD Gothic Neo", sans-serif; position: relative; overflow: hidden; }
+  .head { position: absolute; left: 24px; top: 18px; right: 24px; height: 56px; display: flex; align-items: center; gap: 18px; }
+  .head h1 { font-size: 28px; letter-spacing: -0.5px; }
+  .head p { font-size: 16px; color: var(--soft); }
+  .head .svc { margin-left: auto; border: 1.5px solid var(--be); color: var(--be); border-radius: 10px;
+    padding: 8px 16px; font-size: 16px; font-weight: 700; }
+
+  /* 사용자 여정 */
+  .journey { position: absolute; left: 24px; right: 24px; top: 88px; height: 70px; display: flex; align-items: center;
+    gap: 10px; background: #F4F6FB; border-radius: 14px; padding: 0 20px; }
+  .journey .t { font-size: 15px; font-weight: 700; color: var(--navy); margin-right: 8px; white-space: nowrap; }
+  .jstep { display: flex; align-items: center; gap: 8px; background: #fff; border: 1.5px solid #DCE1EE; border-radius: 22px;
+    padding: 7px 14px 7px 8px; font-size: 15px; font-weight: 700; white-space: nowrap; }
+  .jstep b { width: 24px; height: 24px; border-radius: 12px; background: var(--navy); color: #fff; font-size: 13px;
+    display: inline-flex; align-items: center; justify-content: center; }
+  .journey i { font-style: normal; color: #A6ADC2; font-weight: 700; }
+  .journey .who { margin-left: auto; font-size: 13.5px; color: var(--soft); white-space: nowrap; }
+
+  .grid { position: absolute; left: 24px; right: 24px; top: 186px; display: grid; grid-template-columns: repeat(4, 1fr);
+    grid-template-rows: 404px 356px; gap: 28px 20px; }
+  .card { position: relative; border: 2px solid var(--c); border-radius: 14px; padding: 30px 14px 12px; background: #fff; }
+  .tab { position: absolute; top: -16px; left: 50%; transform: translateX(-50%); background: var(--navy); color: #fff;
+    font-size: 16px; font-weight: 700; padding: 6px 16px; border-radius: 8px; white-space: nowrap; }
+  .scr { text-align: center; font-size: 12.5px; color: var(--faint); }
+  .goal { text-align: center; font-size: 14.5px; font-weight: 700; color: var(--c); margin: 4px 0 10px;
+    background: color-mix(in srgb, var(--c) 9%, white); border-radius: 8px; padding: 7px 8px; }
+  .row { display: flex; align-items: center; gap: 6px; padding: 6px 2px; border-bottom: 1px solid #EEF0F5; font-size: 14.5px; }
+  .row:last-child { border-bottom: none; }
+  .row .n { flex: 1; min-width: 0; }
+  .who-c { display: flex; gap: 3px; }
+  .o { font-style: normal; font-size: 11px; font-weight: 700; padding: 1px 5px; border-radius: 4px; border: 1.3px solid; line-height: 1.4; }
+  .o.fe { color: var(--fe); border-color: var(--fe); }
+  .o.be { color: var(--be); border-color: var(--be); }
+  .o.ai { color: var(--ai); border-color: var(--ai); }
+  .s { flex: 0 0 auto; font-size: 12px; font-weight: 700; padding: 3px 8px; border-radius: 10px; color: #fff; }
+  .s.done { background: var(--done); } .s.part { background: var(--part); } .s.doing { background: var(--doing); }
+  .s.todo { background: var(--todo); } .s.talk { background: var(--talk); }
+  .note { font-size: 13px; color: var(--soft); margin-top: 8px; line-height: 1.5; }
+
+  .foot { position: absolute; left: 24px; right: 24px; top: 994px; height: 72px; border: 2px solid #C5CAD6; border-radius: 14px;
+    display: flex; align-items: center; gap: 30px; padding: 0 22px; }
+  .foot .k { font-size: 14.5px; font-weight: 700; color: var(--navy); }
+  .foot .g { display: flex; align-items: center; gap: 10px; font-size: 14px; color: var(--soft); }
+  .total { margin-left: auto; display: flex; align-items: baseline; gap: 14px; }
+  .total b { font-size: 30px; color: var(--done); }
+  .total span { font-size: 14.5px; color: var(--soft); }
+</style>
+</head>
+<body>
+
+<div class="head">
+  <h1>DrawTale 기능 정의서</h1>
+  <p>아이와 어른이 하는 일, 그리고 시스템이 해 주는 일 — 41개 기능</p>
+  <div class="svc">React 웹앱 · FastAPI · AI Runtime</div>
+</div>
+
+<div class="journey">
+  <span class="t">사용자 여정</span>
+  <span class="jstep"><b>1</b>시작</span><i>→</i>
+  <span class="jstep"><b>2</b>그림 그리기 · 찍기</span><i>→</i>
+  <span class="jstep"><b>3</b>캐릭터 만들기</span><i>→</i>
+  <span class="jstep"><b>4</b>네 칸 고르기</span><i>→</i>
+  <span class="jstep"><b>5</b>이야기 생성</span><i>→</i>
+  <span class="jstep"><b>6</b>보기 · 순서 맞추기</span>
+  <span class="who">7 어른 설정 · 8 공통 안전은 모든 단계에</span>
+</div>
+
+<div class="grid">
+
+  <div class="card" style="--c: var(--fe);">
+    <div class="tab">1. 시작 · 계정</div>
+    <div class="scr">S-14 · S-15 · S-16</div>
+    <div class="goal">가입 없이 바로 써 보고, 원하면 로그인</div>
+    <div class="row"><span class="n">비회원으로 바로 시작</span><span class="who-c"><i class="o fe">FE</i></span><span class="s done">완료</span></div>
+    <div class="row"><span class="n">체험은 기기당 2편까지</span><span class="who-c"><i class="o fe">FE</i></span><span class="s done">완료</span></div>
+    <div class="row"><span class="n">카카오 · 구글 로그인</span><span class="who-c"><i class="o fe">FE</i><i class="o be">BE</i></span><span class="s part">부분</span></div>
+    <div class="row"><span class="n">약관 동의 · 가입</span><span class="who-c"><i class="o fe">FE</i><i class="o be">BE</i></span><span class="s part">부분</span></div>
+    <div class="row"><span class="n">로그인 확인 · 로그아웃</span><span class="who-c"><i class="o fe">FE</i><i class="o be">BE</i></span><span class="s done">완료</span></div>
+    <div class="row"><span class="n">이메일 로그인</span><span class="who-c"><i class="o fe">FE</i><i class="o be">BE</i></span><span class="s talk">논의 중</span></div>
+    <div class="note">계정은 보호자 · 교사의 것. 아이 정보는 받지 않아요</div>
+  </div>
+
+  <div class="card" style="--c: var(--fe);">
+    <div class="tab">2. 그림 그리기 · 찍기</div>
+    <div class="scr">S-02 · S-03 · S-03D</div>
+    <div class="goal">종이 그림을 찍거나, 화면에 직접 그린다</div>
+    <div class="row"><span class="n">잘 되는 그림 안내</span><span class="who-c"><i class="o fe">FE</i></span><span class="s part">부분</span></div>
+    <div class="row"><span class="n">사진 찍기 · 앨범에서 고르기</span><span class="who-c"><i class="o fe">FE</i></span><span class="s part">부분</span></div>
+    <div class="row"><span class="n">화면에 그리기 (부위별 안내)</span><span class="who-c"><i class="o fe">FE</i></span><span class="s done">완료</span></div>
+    <div class="row"><span class="n">샘플 그림 (시연용)</span><span class="who-c"><i class="o fe">FE</i></span><span class="s done">완료</span></div>
+    <div class="note">머리 → 몸 → 팔 → 다리 한 단계씩. 떨어진 부위는 붙이도록 알려 줘요</div>
+  </div>
+
+  <div class="card" style="--c: var(--ai);">
+    <div class="tab">3. 캐릭터 만들기</div>
+    <div class="scr">S-04 · S-05 · S-06</div>
+    <div class="goal">그림 속 사람을 찾아 움직이는 캐릭터로</div>
+    <div class="row"><span class="n">그림 분석 맡기기 · 기다리기</span><span class="who-c"><i class="o fe">FE</i><i class="o be">BE</i></span><span class="s done">완료</span></div>
+    <div class="row"><span class="n">캐릭터 · 관절 15개 찾기</span><span class="who-c"><i class="o ai">AI</i></span><span class="s done">완료</span></div>
+    <div class="row"><span class="n">움직일 영역 떼어 내기</span><span class="who-c"><i class="o ai">AI</i></span><span class="s done">완료</span></div>
+    <div class="row"><span class="n">움직임 미리보기</span><span class="who-c"><i class="o fe">FE</i></span><span class="s done">완료</span></div>
+    <div class="row"><span class="n">관절 맞추기 (어른)</span><span class="who-c"><i class="o fe">FE</i><i class="o be">BE</i></span><span class="s done">완료</span></div>
+    <div class="row"><span class="n">필요할 때만 도움 안내</span><span class="who-c"><i class="o ai">AI</i><i class="o be">BE</i></span><span class="s todo">할 일</span></div>
+    <div class="row"><span class="n">여러 명 · 흐린 그림 안내</span><span class="who-c"><i class="o ai">AI</i></span><span class="s todo">할 일</span></div>
+    <div class="row"><span class="n">손그림 전용 모델 (A2)</span><span class="who-c"><i class="o ai">AI</i></span><span class="s doing">진행 중</span></div>
+  </div>
+
+  <div class="card" style="--c: var(--fe);">
+    <div class="tab">4. 네 칸 고르기</div>
+    <div class="scr">S-07</div>
+    <div class="goal">이야기는 아이가 직접 고른다</div>
+    <div class="row"><span class="n">장소 · 문제 · 행동 · 결과 고르기</span><span class="who-c"><i class="o fe">FE</i></span><span class="s done">완료</span></div>
+    <div class="row"><span class="n">말로 한마디 덧붙이기</span><span class="who-c"><i class="o fe">FE</i></span><span class="s done">완료</span></div>
+    <div class="row"><span class="n">질문 읽어 주기</span><span class="who-c"><i class="o fe">FE</i></span><span class="s done">완료</span></div>
+    <div class="row"><span class="n">선택지를 서버에서 받기</span><span class="who-c"><i class="o be">BE</i></span><span class="s talk">논의 중</span></div>
+    <div class="note">지원 수준에 따라 카드 2 · 4 · 6장. 말로 덧붙이기는 어른이 켜야 해요</div>
+  </div>
+
+  <div class="card" style="--c: var(--be);">
+    <div class="tab">5. 이야기 생성</div>
+    <div class="scr">S-08 · 서버</div>
+    <div class="goal">고른 네 칸을 문장 · 목소리 · 영상으로</div>
+    <div class="row"><span class="n">짧은 이야기 문장 만들기</span><span class="who-c"><i class="o be">BE</i></span><span class="s done">완료</span></div>
+    <div class="row"><span class="n">맞지 않는 내용 걸러내기</span><span class="who-c"><i class="o be">BE</i></span><span class="s done">완료</span></div>
+    <div class="row"><span class="n">읽어 줄 목소리 만들기</span><span class="who-c"><i class="o be">BE</i></span><span class="s done">완료</span></div>
+    <div class="row"><span class="n">움직이는 영상 만들기</span><span class="who-c"><i class="o ai">AI</i><i class="o be">BE</i></span><span class="s done">완료</span></div>
+    <div class="note">하나가 실패해도 다른 방법으로 이야기는 만들어져요 (걸러진 내용은 예외)</div>
+  </div>
+
+  <div class="card" style="--c: var(--fe);">
+    <div class="tab">6. 보기 · 순서 맞추기</div>
+    <div class="scr">S-09 · S-10 · S-11 · S-12</div>
+    <div class="goal">내 이야기를 보고 듣고, 다시 짚어 본다</div>
+    <div class="row"><span class="n">이야기 보기 · 들려주기</span><span class="who-c"><i class="o fe">FE</i></span><span class="s done">완료</span></div>
+    <div class="row"><span class="n">문장 순서 맞추기</span><span class="who-c"><i class="o fe">FE</i></span><span class="s done">완료</span></div>
+    <div class="row"><span class="n">다시 보기 · 새 이야기</span><span class="who-c"><i class="o fe">FE</i></span><span class="s done">완료</span></div>
+    <div class="row"><span class="n">내 이야기 목록 · 지우기</span><span class="who-c"><i class="o fe">FE</i></span><span class="s done">완료</span></div>
+    <div class="row"><span class="n">활동 기록 남기기</span><span class="who-c"><i class="o be">BE</i><i class="o fe">FE</i></span><span class="s todo">할 일</span></div>
+    <div class="row"><span class="n">계정에 이야기 보관</span><span class="who-c"><i class="o be">BE</i><i class="o fe">FE</i></span><span class="s talk">논의 중</span></div>
+  </div>
+
+  <div class="card" style="--c: var(--be);">
+    <div class="tab">7. 어른 설정</div>
+    <div class="scr">S-13</div>
+    <div class="goal">아이에게 맞게 어른이 조절한다</div>
+    <div class="row"><span class="n">3초 길게 눌러 들어가기</span><span class="who-c"><i class="o fe">FE</i></span><span class="s done">완료</span></div>
+    <div class="row"><span class="n">지원 수준 1 · 2 · 3</span><span class="who-c"><i class="o fe">FE</i></span><span class="s done">완료</span></div>
+    <div class="row"><span class="n">소리 전체 끄기</span><span class="who-c"><i class="o fe">FE</i></span><span class="s done">완료</span></div>
+    <div class="row"><span class="n">진단 모드 (시연용)</span><span class="who-c"><i class="o fe">FE</i></span><span class="s done">완료</span></div>
+    <div class="row"><span class="n">원본 그림 지우기</span><span class="who-c"><i class="o fe">FE</i><i class="o be">BE</i></span><span class="s part">부분</span></div>
+    <div class="note">아이가 실수로 들어오지 않도록 일부러 어렵게 열려요</div>
+  </div>
+
+  <div class="card" style="--c: var(--ai);">
+    <div class="tab">8. 공통 · 안전</div>
+    <div class="scr">E-01 · 모든 화면</div>
+    <div class="goal">실패해도 아이 탓으로 느끼지 않게</div>
+    <div class="row"><span class="n">오류를 아이 말로 안내</span><span class="who-c"><i class="o fe">FE</i></span><span class="s done">완료</span></div>
+    <div class="row"><span class="n">연결 끊김 표시</span><span class="who-c"><i class="o fe">FE</i></span><span class="s part">부분</span></div>
+    <div class="row"><span class="n">서버 없이도 시연 (목 엔진)</span><span class="who-c"><i class="o fe">FE</i><i class="o be">BE</i></span><span class="s done">완료</span></div>
+    <div class="note">큰 버튼(88px) · 색만으로 구분하지 않기 · 자동으로 넘어가지 않기.<br>API 키는 서버에만, 소셜은 회원번호만</div>
+  </div>
+
+</div>
+
+<div class="foot">
+  <span class="k">상태</span>
+  <span class="g"><span class="s done">완료</span><span class="s part">부분</span><span class="s doing">진행 중</span><span class="s todo">할 일</span><span class="s talk">논의 중</span></span>
+  <span class="k" style="margin-left: 10px;">담당</span>
+  <span class="g"><i class="o fe">FE</i>프론트 <i class="o be">BE</i>백엔드 <i class="o ai">AI</i>AI</span>
+  <div class="total"><b>28</b><span>완료</span><b style="color: var(--part);">6</b><span>부분</span><b style="color: var(--doing);">1</b><span>진행 중</span><b style="color: var(--todo);">3</b><span>할 일</span><b style="color: var(--talk);">3</b><span>논의 중</span></div>
+</div>
+
+</body>
+</html>
