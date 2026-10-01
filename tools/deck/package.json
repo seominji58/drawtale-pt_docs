@@ -1,0 +1,7 @@
+{
+  "name": "drawtale-deck",
+  "private": true,
+  "description": "DrawTale 중간 발표 덱을 처음 만든 스크립트",
+  "scripts": { "build": "node build.js ../../presentation/DrawTale_중간발표.pptx" },
+  "dependencies": { "pptxgenjs": "^3.12.0" }
+}
