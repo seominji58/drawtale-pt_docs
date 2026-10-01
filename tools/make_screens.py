@@ -410,13 +410,17 @@ MOVED = "left_elbow"
 BEFORE = (448, 318)   # AI 가 잘못 짚었던 자리 (예시)
 
 
-def s06():
-    w = Wire(adult=True, caption="캐릭터 그림: Meta Animated Drawings 예제 char1 (MIT License)")
+def s06(blank=False):
+    """blank=True 면 ① 칸(캐릭터 그림 · 관절점)만 비운 판. 발표에서 다른 그림을 얹을 때 쓴다."""
+    w = Wire(adult=True, caption=None if blank else "캐릭터 그림: Meta Animated Drawings 예제 char1 (MIT License)")
     w.frame(title="어른이 맞춰 주세요", speech=False,
             acts=[("움직여 보기", "secondary"), ("다 했어요", "primary")])
 
     sx, sy, sw, sh = 24, RAIL + 16, 560, 480
     w.rect(sx, sy, sw, sh, fill=CARD, line=LINE, r=16)
+    if blank:
+        _s06_rest(w, sx, sy, blank=True)
+        return
     src = Image.open(CHAR).convert("RGB")
     scale = min((sw - 24) / src.width, (sh - 24) / src.height)
     iw, ih = int(src.width * scale), int(src.height * scale)
@@ -444,6 +448,11 @@ def s06():
             w.circle(x, y, 15, fill="#FFEA99", line="#E5A23B", width=3)
         w.circle(x, y, 8, fill="#FFFFFF", line="#4C5CC4", width=3)
 
+    _s06_rest(w, sx, sy)
+
+
+def _s06_rest(w, sx, sy, blank=False):
+    """S-06 의 ① 칸 밖 (관절 목록 · 안내 · 버튼 · 번호)"""
     lx, ly, lw = 604, RAIL + 16, 396
     w.rect(lx, ly, lw, 480, fill=CARD, line=LINE, r=16)
     row = 480 / len(ORDER)
@@ -462,7 +471,7 @@ def s06():
 
     w.mark(1, sx + 4, sy + 4); w.mark(2, lx + 4, ly + 4); w.mark(3, 28, RAIL + 512)
     w.mark(4, 290, H - 92); w.mark(5, 534, H - 92); w.mark(6, 26, 14)
-    w.save("S-06")
+    w.save("S-06-blank" if blank else "S-06")
 
 
 def s07():
@@ -716,6 +725,6 @@ if __name__ == "__main__":
     common()
     s01(); s02(); s03(); s03d()
     waiting("S-04", 2, "친구를 만들고 있어요", "대기 삽화 (둥실)", "running · 2140ms · agent")
-    s05(); s06(); s07()
+    s05(); s06(); s06(blank=True); s07()
     waiting("S-08", 3, "이야기를 쓰고 있어요", "연필 삽화 (둥실)", "running · 24s · agent")
     s09(); s10(); s11(); s12(); s13(); s14(); s15(); s16(); e01()
