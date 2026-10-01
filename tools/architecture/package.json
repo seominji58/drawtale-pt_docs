@@ -1,0 +1,7 @@
+{
+  "name": "drawtale-architecture",
+  "private": true,
+  "description": "시스템 아키텍처 한 장 그림을 HTML 로 짜서 Chrome 으로 찍는다",
+  "scripts": { "render": "node render.js" },
+  "dependencies": { "puppeteer-core": "^24.0.0", "simple-icons": "^13.0.0" }
+}
