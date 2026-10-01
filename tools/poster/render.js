@@ -13,6 +13,7 @@ const here = __dirname;
 const POSTERS = [
   { html: "architecture.html", out: "../../assets/architecture/system-architecture.png" },
   { html: "feature-spec.html", out: "../../assets/feature-spec/feature-spec.png" },
+  { html: "flowchart.html", out: "../../assets/flowchart/flowchart.png" },
 ];
 const chrome = process.env.CHROME_PATH || "C:/Program Files/Google/Chrome/Application/chrome.exe";
 const icons = Object.values(si).filter((i) => i && i.slug);
