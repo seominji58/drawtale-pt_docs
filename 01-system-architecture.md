@@ -9,7 +9,7 @@
 
 ![DrawTale 시스템 아키텍처](assets/architecture/system-architecture.png)
 
-한 장 그림은 `tools/make_architecture.py`로 만든다 (3200×2160 PNG). 구조가 바뀌면 스크립트의 글자를 고치고 다시 만든다. 아래 Mermaid 그림과 표가 같은 내용을 나누어 설명한다.
+전체 구조가 한눈에 보이도록 **영역과 계층만** 그린 한 장이다 (16:9, `tools/make_architecture.py`). 엔드포인트 · 모듈 · 테이블 같은 세부는 아래 본문에 있다. AI Model 학습(A2)이 바꿀 포즈 모델의 구조는 아직 정하지 않아, 그림에는 「모델 교체」 연결만 두었다 — 「08 AI 아키텍처」에서 다룬다.
 
 ## 한 줄 요약
 
