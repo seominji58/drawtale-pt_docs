@@ -1,0 +1,140 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>DrawTale 화면 설계서</title>
+<!--
+  04-screen-spec.md 의 화면 19개를 흐름 순서로 한 장에 모은 화면 지도.
+  썸네일은 assets/screens 의 와이어프레임 그대로다 (S-06 만 실제 캐릭터 그림). 화면을 고치면 make_screens.py 로 다시 만든다.
+-->
+<style>
+  :root { --ink: #20263D; --soft: #4E5570; --faint: #7C8299; --navy: #26306A;
+    --g1: #D9962B; --g2: #34A57F; --g3: #8560D6; --g4: #4256C8; --g5: #2F86D6; --g6: #5B6B8C; }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { width: 1600px; height: 1080px; background: #FFFFFF; color: var(--ink);
+    font-family: "Malgun Gothic", "Apple SD Gothic Neo", sans-serif; position: relative; overflow: hidden;  word-break: keep-all; }
+  .head { position: absolute; left: 24px; top: 18px; right: 24px; height: 56px; display: flex; align-items: center; gap: 18px; }
+  .head h1 { font-size: 28px; letter-spacing: -0.5px; }
+  .head p { font-size: 16px; color: var(--soft); }
+  .head .svc { margin-left: auto; border: 1.5px solid var(--g4); color: var(--g4); border-radius: 10px;
+    padding: 8px 16px; font-size: 16px; font-weight: 700; }
+
+  .grid { position: absolute; left: 24px; right: 24px; top: 100px; display: grid; grid-template-columns: 1fr 1fr;
+    grid-template-rows: 262px 262px 262px; gap: 30px 20px; }
+  .card { position: relative; border: 2px solid var(--c); border-radius: 14px; padding: 26px 14px 10px; background: #fff; }
+  .tab { position: absolute; top: -16px; left: 22px; background: var(--navy); color: #fff;
+    font-size: 16px; font-weight: 700; padding: 6px 16px; border-radius: 8px; white-space: nowrap; }
+  .tab small { font-weight: 400; opacity: 0.85; font-size: 13px; margin-left: 6px; }
+  .row { display: flex; align-items: flex-start; gap: 4px; }
+  .shot { flex: 0 0 170px; }
+  .shot img { display: block; width: 170px; height: 130px; object-fit: cover; border-radius: 8px; border: 1px solid #E2E5EC; }
+  .shot .id { margin-top: 7px; font-size: 14px; font-weight: 700; color: var(--c); display: flex; align-items: center; gap: 6px; }
+  .shot .nm { font-size: 14.5px; font-weight: 700; }
+  .shot .ds { font-size: 12.5px; color: var(--soft); line-height: 1.4; margin-top: 2px; }
+  .adult { font-size: 11px; font-weight: 700; color: #9A6410; background: #FFF1D6; border-radius: 4px; padding: 1px 6px; }
+  .ar { flex: 0 0 20px; text-align: center; color: #A6ADC2; font-weight: 700; font-size: 18px; margin-top: 54px; }
+  .side { flex: 1; margin-left: 10px; padding-left: 14px; border-left: 1.5px solid #E2E5EC; font-size: 13.5px; color: var(--soft); line-height: 1.6; }
+  .side b { color: var(--ink); }
+
+  .foot { position: absolute; left: 24px; right: 24px; top: 984px; height: 80px; border: 2px solid #C5CAD6; border-radius: 14px;
+    display: flex; align-items: center; gap: 14px; padding: 0 20px; }
+  .foot .k { font-size: 14.5px; font-weight: 700; color: var(--navy); white-space: nowrap; }
+  .p { font-size: 13.5px; font-weight: 700; padding: 6px 11px; border-radius: 8px; background: #F1F3F8; white-space: nowrap; }
+  .lv { margin-left: auto; display: flex; gap: 8px; align-items: center; }
+  .lv span { font-size: 13px; padding: 5px 10px; border-radius: 8px; border: 1.5px solid #C5CAD6; white-space: nowrap; }
+</style>
+</head>
+<body>
+
+<div class="head">
+  <h1>DrawTale 화면 설계서</h1>
+  <p>화면 19개를 흐름 순서로 — 화면 지도</p>
+  <div class="svc">화면 설계서 v0.3 · 태블릿 가로 1024×768 기준</div>
+</div>
+
+<div class="grid">
+
+  <div class="card" style="--c: var(--g1);">
+    <div class="tab">1. 처음 · 계정<small>어른이 처음 한 번</small></div>
+    <div class="row">
+      <div class="shot"><img src="../../assets/screens/S-14.png"><div class="id">S-14 <span class="adult">어른</span></div><div class="nm">처음 실행</div><div class="ds">가입 없이 바로 시작</div></div>
+      <div class="ar">→</div>
+      <div class="shot"><img src="../../assets/screens/S-15.png"><div class="id">S-15 <span class="adult">어른</span></div><div class="nm">로그인</div><div class="ds">카카오 · 구글</div></div>
+      <div class="ar">→</div>
+      <div class="shot"><img src="../../assets/screens/S-16.png"><div class="id">S-16 <span class="adult">어른</span></div><div class="nm">회원가입</div><div class="ds">약관 동의 먼저</div></div>
+      <div class="side"><b>처음 실행할 때만</b> 보여요.<br>계정은 보호자 · 교사의 것이고, 아이 정보는 받지 않아요.</div>
+    </div>
+  </div>
+
+  <div class="card" style="--c: var(--g2);">
+    <div class="tab">2. 시작 · 그림<small>아이</small></div>
+    <div class="row">
+      <div class="shot"><img src="../../assets/screens/S-01.png"><div class="id">S-01</div><div class="nm">시작</div><div class="ds">이야기 만들기 · 내 이야기</div></div>
+      <div class="ar">→</div>
+      <div class="shot"><img src="../../assets/screens/S-02.png"><div class="id">S-02</div><div class="nm">그림 안내</div><div class="ds">이런 그림이 좋아요</div></div>
+      <div class="ar">→</div>
+      <div class="shot"><img src="../../assets/screens/S-03.png"><div class="id">S-03</div><div class="nm">그림 올리기</div><div class="ds">찍기 · 앨범</div></div>
+      <div class="ar">↔</div>
+      <div class="shot"><img src="../../assets/screens/S-03D.png"><div class="id">S-03D</div><div class="nm">화면에 그리기</div><div class="ds">머리 → 몸 → 팔 → 다리</div></div>
+    </div>
+  </div>
+
+  <div class="card" style="--c: var(--g3);">
+    <div class="tab">3. 캐릭터 만들기<small>아이 · 어른</small></div>
+    <div class="row">
+      <div class="shot"><img src="../../assets/screens/S-04.png"><div class="id">S-04</div><div class="nm">만드는 중</div><div class="ds">친구를 만들고 있어요</div></div>
+      <div class="ar">→</div>
+      <div class="shot"><img src="../../assets/screens/S-05.png"><div class="id">S-05</div><div class="nm">캐릭터 확인</div><div class="ds">내 친구가 움직여요</div></div>
+      <div class="ar">↔</div>
+      <div class="shot"><img src="../../assets/screens/S-06.png"><div class="id">S-06 <span class="adult">어른</span></div><div class="nm">관절 맞추기</div><div class="ds">잘 안 움직일 때만</div></div>
+      <div class="side"><b>S-06</b>은 그림 위 관절 15개를 어른이 끌어 맞춰요.<br>저장한 관절로 영상을 만들어요.</div>
+    </div>
+  </div>
+
+  <div class="card" style="--c: var(--g4);">
+    <div class="tab">4. 이야기 만들기<small>아이</small></div>
+    <div class="row">
+      <div class="shot"><img src="../../assets/screens/S-07.png"><div class="id">S-07</div><div class="nm">네 칸 고르기</div><div class="ds">장소 → 문제 → 행동 → 결과</div></div>
+      <div class="ar">→</div>
+      <div class="shot"><img src="../../assets/screens/S-07-voice.png"><div class="id">S-07</div><div class="nm">더 말해 볼래요?</div><div class="ds">말로 덧붙이기 (어른이 켜면)</div></div>
+      <div class="ar">→</div>
+      <div class="shot"><img src="../../assets/screens/S-08.png"><div class="id">S-08</div><div class="nm">이야기 쓰는 중</div><div class="ds">문장 · 목소리 · 영상</div></div>
+      <div class="side"><b>이야기는 아이가 직접 골라요.</b><br>지원 수준에 따라 카드 2 · 4 · 6장.</div>
+    </div>
+  </div>
+
+  <div class="card" style="--c: var(--g5);">
+    <div class="tab">5. 이야기 보기<small>아이</small></div>
+    <div class="row">
+      <div class="shot"><img src="../../assets/screens/S-09.png"><div class="id">S-09</div><div class="nm">이야기 보기</div><div class="ds">영상 + 문장 짚으며 듣기</div></div>
+      <div class="ar">→</div>
+      <div class="shot"><img src="../../assets/screens/S-10.png"><div class="id">S-10</div><div class="nm">순서 맞추기</div><div class="ds">탭 두 번으로 놓기</div></div>
+      <div class="ar">→</div>
+      <div class="shot"><img src="../../assets/screens/S-11.png"><div class="id">S-11</div><div class="nm">다 했어요</div><div class="ds">다시 보기 · 새 이야기</div></div>
+      <div class="side"><b>새 이야기</b>는 같은 캐릭터로 S-07부터.<br>틀려도 부정적인 말을 쓰지 않아요.</div>
+    </div>
+  </div>
+
+  <div class="card" style="--c: var(--g6);">
+    <div class="tab">6. 보관 · 설정 · 오류</div>
+    <div class="row">
+      <div class="shot"><img src="../../assets/screens/S-12.png"><div class="id">S-12</div><div class="nm">내 이야기</div><div class="ds">이 기기에 저장된 목록</div></div>
+      <div class="ar"></div>
+      <div class="shot"><img src="../../assets/screens/S-13.png"><div class="id">S-13 <span class="adult">어른</span></div><div class="nm">어른 설정</div><div class="ds">3초 길게 눌러 열기</div></div>
+      <div class="ar"></div>
+      <div class="shot"><img src="../../assets/screens/E-01.png"><div class="id">E-01</div><div class="nm">오류</div><div class="ds">아이 말로, 다시 할 곳으로</div></div>
+      <div class="side"><b>E-01</b>은 모달이 아니라 전체 화면.<br>갸웃하는 얼굴로, 아이 탓으로 느끼지 않게.</div>
+    </div>
+  </div>
+
+</div>
+
+<div class="foot">
+  <span class="k">공통 원칙</span>
+  <span class="p">한 화면 한 질문</span><span class="p">글자 없이도 진행</span><span class="p">자동으로 넘어가지 않음</span>
+  <span class="p">되돌리기 왼쪽 위 · 다시 듣기 오른쪽 위</span><span class="p">버튼 88px 이상</span><span class="p">색만으로 구분하지 않음</span>
+  <div class="lv"><span class="k" style="border: none; padding: 0;">지원 수준</span><span>1 · 카드 2장</span><span>2 · 카드 4장</span><span>3 · 카드 6장</span></div>
+</div>
+
+</body>
+</html>
