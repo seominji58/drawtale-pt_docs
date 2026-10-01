@@ -410,9 +410,9 @@ MOVED = "left_elbow"
 BEFORE = (448, 318)   # AI 가 잘못 짚었던 자리 (예시)
 
 
-def s06(blank=False):
+def s06(blank=False, only_moved=False, save_as=None):
     """blank=True 면 ① 칸에서 캐릭터 그림만 뺀 판. 뼈대 · 관절점 15개 · 「끌어서 옮기기」 표시는 그대로 둔다.
-    발표에서 다른 그림을 얹을 때 쓴다."""
+    only_moved=True 면 뼈대 · 다른 관절점도 빼고 끌어 옮기는 관절점과 그 표시만 남긴다. 다른 용도로 따로 쓰는 판이다."""
     w = Wire(adult=True, caption=None if blank else "캐릭터 그림: Meta Animated Drawings 예제 char1 (MIT License)")
     w.frame(title="어른이 맞춰 주세요", speech=False,
             acts=[("움직여 보기", "secondary"), ("다 했어요", "primary")])
@@ -429,8 +429,9 @@ def s06(blank=False):
     def P(xy):
         return (ox + xy[0] * scale, oy + xy[1] * scale)
 
-    for a, b in BONES:
-        w.line([P(JOINTS[a]), P(JOINTS[b])], "#7386F5", 3)
+    if not only_moved:
+        for a, b in BONES:
+            w.line([P(JOINTS[a]), P(JOINTS[b])], "#7386F5", 3)
 
     # 끌어 옮기는 중인 관절: 전 자리는 흐린 점선 원, 화살표, 새 자리는 노란 테
     bx, by = P(BEFORE)
@@ -441,16 +442,18 @@ def s06(blank=False):
     w.line([(nx + 8, ny + 10), (nx + 12, ny + 22)], "#E5A23B", 3)
     w.pill(bx - 20, by + 16, "끌어서 옮기기", 13, True, fill="#FFF4D6", pad=10, h=26)
 
-    for name, xy in JOINTS.items():
+    for jn, xy in JOINTS.items():
+        if only_moved and jn != MOVED:
+            continue
         x, y = P(xy)
-        if name == MOVED:
+        if jn == MOVED:
             w.circle(x, y, 15, fill="#FFEA99", line="#E5A23B", width=3)
         w.circle(x, y, 8, fill="#FFFFFF", line="#4C5CC4", width=3)
 
-    _s06_rest(w, sx, sy, blank=blank)
+    _s06_rest(w, sx, sy, blank=blank, save_as=save_as)
 
 
-def _s06_rest(w, sx, sy, blank=False):
+def _s06_rest(w, sx, sy, blank=False, save_as=None):
     """S-06 의 ① 칸 밖 (관절 목록 · 안내 · 버튼 · 번호)"""
     lx, ly, lw = 604, RAIL + 16, 396
     w.rect(lx, ly, lw, 480, fill=CARD, line=LINE, r=16)
@@ -470,7 +473,7 @@ def _s06_rest(w, sx, sy, blank=False):
 
     w.mark(1, sx + 4, sy + 4); w.mark(2, lx + 4, ly + 4); w.mark(3, 28, RAIL + 512)
     w.mark(4, 290, H - 92); w.mark(5, 534, H - 92); w.mark(6, 26, 14)
-    w.save("S-06-blank" if blank else "S-06")
+    w.save(save_as or ("S-06-blank" if blank else "S-06"))
 
 
 def s07():
