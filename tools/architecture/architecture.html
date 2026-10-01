@@ -1,0 +1,257 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>DrawTale 시스템 아키텍처</title>
+<!--
+  render.js 가 로고 자리(중괄호 두 개 + icon:이름)를 simple-icons 로고로 바꾼 뒤 브라우저로 찍는다.
+  누구나 읽을 수 있게: 쉬운 말을 먼저, 기술 이름은 로고와 작은 꼬리표로. 칸마다 서너 줄 이하.
+-->
+<style>
+  :root {
+    --ink: #20263D; --soft: #4E5570; --faint: #7C8299; --navy: #26306A;
+    --client: #34A57F; --net: #D9962B; --server: #4256C8; --ai: #8560D6; --ext: #7A5CC9;
+    --data: #2F86D6; --model: #D9962B; --ok: #2E9D6F;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { width: 1600px; height: 1080px; background: #FFFFFF; color: var(--ink);
+    font-family: "Malgun Gothic", "Apple SD Gothic Neo", sans-serif; position: relative; overflow: hidden; }
+  .head { position: absolute; left: 24px; top: 18px; right: 24px; height: 56px; display: flex; align-items: center; gap: 18px; }
+  .head h1 { font-size: 28px; letter-spacing: -0.5px; }
+  .head p { font-size: 16px; color: var(--soft); }
+  .head .svc { margin-left: auto; border: 1.5px solid var(--server); color: var(--server); border-radius: 10px;
+    padding: 8px 16px; font-size: 16px; font-weight: 700; }
+
+  .card { position: absolute; background: #fff; border: 2px solid var(--c); border-radius: 14px; padding: 36px 18px 16px; }
+  .tab { position: absolute; top: -16px; left: 50%; transform: translateX(-50%); background: var(--navy); color: #fff;
+    font-size: 16px; font-weight: 700; padding: 6px 16px; border-radius: 8px; white-space: nowrap; }
+  .logos { display: flex; align-items: center; justify-content: center; gap: 10px; font-size: 17px; font-weight: 700; }
+  .logos svg { width: 26px; height: 26px; }
+  .sub { text-align: center; font-size: 14px; color: var(--soft); margin-top: 4px; }
+  .label { font-size: 15px; font-weight: 700; color: var(--c); margin: 12px 0 6px; }
+  ul { list-style: none; }
+  li { font-size: 15px; line-height: 1.55; padding-left: 14px; position: relative; }
+  li::before { content: ""; position: absolute; left: 0; top: 10px; width: 6px; height: 6px; border-radius: 3px; background: var(--c); }
+  .tint { background: color-mix(in srgb, var(--c) 9%, white); border-radius: 10px; padding: 10px 14px; }
+  .bar { background: color-mix(in srgb, var(--c) 12%, white); color: var(--c); border-radius: 8px; padding: 8px 12px;
+    font-size: 15px; font-weight: 700; text-align: center; }
+  .dash { border: 1.5px dashed var(--c); border-radius: 10px; padding: 10px 12px; }
+  .tag { display: inline-block; font-size: 12.5px; color: var(--faint); }
+
+  /* 1 클라이언트 */
+  .tablet { background: #2F3441; border-radius: 14px; padding: 8px; }
+  .tablet img { display: block; width: 100%; border-radius: 6px; }
+  .cap { text-align: center; font-size: 13.5px; color: var(--soft); margin: 6px 0 10px; }
+
+  /* 3 백엔드 세 칸 */
+  .cols { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; margin-top: 12px; }
+  .col { border: 1.5px solid color-mix(in srgb, var(--c) 45%, white); border-radius: 10px; padding: 10px 12px; }
+  .col h3 { font-size: 15.5px; color: var(--c); margin-bottom: 6px; }
+
+  /* 4 AI 단계 */
+  .steps { display: flex; flex-direction: column; gap: 8px; margin-top: 10px; }
+  .step { display: flex; align-items: center; gap: 10px; font-size: 15.5px; font-weight: 700; }
+  .num { flex: 0 0 26px; height: 26px; border-radius: 13px; background: var(--c); color: #fff; font-size: 14px;
+    display: flex; align-items: center; justify-content: center; }
+
+  /* 5 외부 서비스 */
+  .svc-card { display: flex; align-items: center; gap: 12px; border: 1.5px solid color-mix(in srgb, var(--c) 40%, white);
+    border-radius: 10px; padding: 9px 12px; margin-bottom: 9px; }
+  .svc-card svg { flex: 0 0 30px; width: 30px; height: 30px; }
+  .svc-card b { display: block; font-size: 15.5px; }
+  .svc-card span { font-size: 13.5px; color: var(--soft); }
+
+  /* 6 데이터 */
+  .tables { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; margin-top: 10px; }
+  .tbl { border: 1.5px solid color-mix(in srgb, var(--c) 40%, white); border-radius: 8px; padding: 7px 10px; }
+  .tbl b { font-size: 15px; display: block; }
+  .tbl span { font-size: 12px; color: var(--faint); }
+
+  /* 7 A2 */
+  .chain { display: flex; align-items: center; gap: 6px; flex-wrap: nowrap; margin-top: 10px; }
+  .chip { background: color-mix(in srgb, var(--c) 16%, white); color: color-mix(in srgb, var(--c) 70%, black);
+    font-size: 14px; font-weight: 700; padding: 6px 11px; border-radius: 16px; white-space: nowrap; }
+  .chain i { font-style: normal; color: var(--c); font-weight: 700; }
+
+  /* 8 요약 */
+  .check { font-size: 15px; line-height: 1.75; padding-left: 26px; position: relative; }
+  .check::before { content: ""; position: absolute; left: 4px; top: 6px; width: 7px; height: 12px;
+    border: solid var(--ok); border-width: 0 3px 3px 0; transform: rotate(45deg); }
+  .check.todo::before { border-color: var(--net); border-width: 0 0 3px 0; transform: none; width: 12px; top: 3px; height: 8px; }
+
+  /* 기술 스택 */
+  .stack { display: flex; flex-wrap: wrap; gap: 10px 22px; margin-top: 4px; }
+  .stack span { display: flex; align-items: center; gap: 7px; font-size: 14.5px; }
+  .stack svg { width: 20px; height: 20px; }
+  .badge { width: 20px; height: 20px; border-radius: 4px; background: #0078D4; color: #fff; font-size: 12px; font-weight: 700;
+    display: inline-flex; align-items: center; justify-content: center; }
+  .legend div { display: flex; align-items: center; gap: 10px; font-size: 14px; color: var(--soft); margin-bottom: 7px; }
+
+  svg.wires { position: absolute; left: 0; top: 0; width: 1600px; height: 1080px; pointer-events: none; }
+  .wl { font: 700 13.5px "Malgun Gothic", sans-serif; fill: var(--soft); }
+</style>
+</head>
+<body>
+
+<div class="head">
+  <h1>DrawTale 시스템 아키텍처</h1>
+  <p>아이가 그린 그림이 움직이는 이야기가 되기까지</p>
+  <div class="svc">서비스: 한칸이야기 · 웹앱</div>
+</div>
+
+<!-- 1 클라이언트 -->
+<div class="card" style="--c: var(--client); left: 24px; top: 104px; width: 290px; height: 760px;">
+  <div class="tab">1. 클라이언트</div>
+  <div class="logos">{{icon:react}}{{icon:vite}}<span>React + Vite</span></div>
+  <div class="sub">태블릿 · PC 웹 브라우저</div>
+  <div class="tablet" style="margin-top: 14px;"><img src="../../assets/architecture/app-s-01.jpg" alt=""></div>
+  <div class="cap">시작 화면</div>
+  <div class="tablet"><img src="../../assets/architecture/app-s-05.jpg" alt=""></div>
+  <div class="cap">내 그림이 캐릭터로 움직이는 화면</div>
+  <div class="tint">
+    <div class="label" style="margin-top: 0;">아이와 어른이 하는 일</div>
+    <ul>
+      <li>그림 찍기 · 화면에 그리기</li>
+      <li>내 캐릭터 확인 · 관절 맞추기</li>
+      <li>네 칸 골라 이야기 만들기</li>
+      <li>이야기 보기 · 순서 맞추기</li>
+    </ul>
+  </div>
+</div>
+
+<!-- 2 네트워크 · 배포 -->
+<div class="card" style="--c: var(--net); left: 344px; top: 104px; width: 220px; height: 400px;">
+  <div class="tab">2. 네트워크 · 배포</div>
+  <div class="label" style="margin-top: 2px;">지금</div>
+  <div class="bar">내 PC (Docker)</div>
+  <div class="label">목표</div>
+  <div class="bar">Azure (배포 전)</div>
+  <div class="dash" style="margin-top: 14px; font-size: 15px; line-height: 1.6;">
+    모든 연결은 <b>HTTPS</b><br><span class="tag">배포할 때 적용</span>
+  </div>
+  <div class="tint" style="margin-top: 14px;">
+    <ul>
+      <li>AI 서버는 비공개</li>
+      <li>API 키는 서버에만</li>
+    </ul>
+  </div>
+</div>
+
+<!-- 3 백엔드 -->
+<div class="card" style="--c: var(--server); left: 594px; top: 104px; width: 560px; height: 356px;">
+  <div class="tab">3. 백엔드 (서버)</div>
+  <div class="logos">{{icon:fastapi}}{{icon:python}}<span>FastAPI · Python</span></div>
+  <div class="bar" style="margin-top: 10px;">drawtale-backend  ·  Port 8000  ·  오래 걸리는 일은 순서대로 처리</div>
+  <div class="cols">
+    <div class="col"><h3>받는 곳 (API)</h3><ul><li>그림 받기</li><li>관절 저장</li><li>이야기 요청</li><li>로그인</li></ul></div>
+    <div class="col"><h3>하는 일 (서비스)</h3><ul><li>그림 분석 맡기기</li><li>이야기 문장 · 검열</li><li>읽어 줄 음성</li><li>진행 상태 알림</li></ul></div>
+    <div class="col"><h3>지키는 것 (보안)</h3><ul><li>아이 계정 없음</li><li>소셜은 회원번호만</li><li>토큰 암호화 저장</li></ul></div>
+  </div>
+  <div class="bar" style="margin-top: 12px;">데이터 연결  ·  SQLAlchemy · Alembic</div>
+</div>
+
+<!-- 4 AI -->
+<div class="card" style="--c: var(--ai); left: 774px; top: 544px; width: 380px; height: 320px;">
+  <div class="tab">4. AI (캐릭터 인식 · 애니메이션)</div>
+  <div class="logos">{{icon:pytorch}}{{icon:meta}}{{icon:docker}}<span>Meta 사전학습 모델</span></div>
+  <div class="steps">
+    <div class="step"><span class="num">1</span>그림에서 캐릭터 찾기</div>
+    <div class="step"><span class="num">2</span>관절 15개 찾기</div>
+    <div class="step"><span class="num">3</span>움직이는 영상(MP4) 만들기</div>
+  </div>
+  <div class="dash" style="--c: var(--model); margin-top: 14px; font-size: 14.5px; line-height: 1.5;">
+    <b style="color: var(--model);">모델 교체 지점 (추후)</b><br>7번 A2 모델이 더 나으면 여기에
+  </div>
+</div>
+
+<!-- 5 외부 서비스 -->
+<div class="card" style="--c: var(--ext); left: 1184px; top: 104px; width: 392px; height: 450px;">
+  <div class="tab">5. 외부 서비스 연동</div>
+  <div class="svc-card">{{icon:openai}}<div><b>OpenAI GPT-4o-mini</b><span>고른 네 칸을 짧은 이야기로</span></div></div>
+  <div class="svc-card">{{icon:openai}}<div><b>OpenAI Moderation</b><span>이야기에 맞지 않는 말 걸러내기</span></div></div>
+  <div class="svc-card">{{icon:elevenlabs}}<div><b>OpenAI TTS · ElevenLabs</b><span>이야기를 읽어 주는 목소리</span></div></div>
+  <div class="svc-card">{{icon:kakaotalk}}<div><b>카카오 로그인</b><span>보호자 · 교사 로그인 (선택)</span></div></div>
+  <div class="svc-card">{{icon:google}}<div><b>Google 로그인</b><span>보호자 · 교사 로그인 (선택)</span></div></div>
+</div>
+
+<!-- 6 데이터 -->
+<div class="card" style="--c: var(--data); left: 344px; top: 544px; width: 400px; height: 320px;">
+  <div class="tab">6. 데이터 (저장)</div>
+  <div class="logos">{{icon:postgresql}}<span>PostgreSQL 16</span></div>
+  <div class="tables">
+    <div class="tbl"><b>캐릭터</b><span>characters</span></div>
+    <div class="tbl"><b>관절 보정</b><span>joint_corrections</span></div>
+    <div class="tbl"><b>진행 상태</b><span>jobs</span></div>
+    <div class="tbl"><b>이야기</b><span>stories</span></div>
+    <div class="tbl"><b>계정</b><span>users · social_accounts</span></div>
+    <div class="tbl"><b>로그인 토큰</b><span>auth_tokens</span></div>
+  </div>
+  <div class="bar" style="margin-top: 12px;">파일: 그림 · 음성 · 영상  (나중에 Azure Blob)</div>
+</div>
+
+<!-- 7 A2 -->
+<div class="card" style="--c: var(--model); left: 1184px; top: 594px; width: 392px; height: 270px;">
+  <div class="tab">7. AI 모델 학습 (A2)</div>
+  <div class="logos">{{icon:googlecolab}}{{icon:pytorch}}<span>손그림 전용 관절 모델</span></div>
+  <div class="chain"><span class="chip">데이터</span><i>→</i><span class="chip">전처리</span><i>→</i><span class="chip">학습</span><i>→</i><span class="chip">평가</span></div>
+  <ul style="margin-top: 14px;">
+    <li>아이 손그림에 맞춘 관절 15개</li>
+    <li>Amateur Drawings 데이터 · Colab</li>
+    <li>교체 구조는 AI 아키텍처에서 정해요</li>
+  </ul>
+</div>
+
+<!-- 기술 스택 · 범례 -->
+<div class="card" style="--c: #C5CAD6; left: 24px; top: 896px; width: 1130px; height: 160px; padding-top: 22px;">
+  <div class="tab">기술 스택</div>
+  <div style="display: flex; gap: 30px;">
+    <div class="stack" style="flex: 1;">
+      <span>{{icon:react}}React</span><span>{{icon:vite}}Vite</span><span>{{icon:typescript}}TypeScript</span>
+      <span>{{icon:fastapi}}FastAPI</span><span>{{icon:python}}Python</span><span>{{icon:postgresql}}PostgreSQL</span>
+      <span>{{icon:sqlalchemy}}SQLAlchemy</span><span>{{icon:docker}}Docker</span><span>{{icon:pytorch}}PyTorch · TorchServe</span>
+      <span>{{icon:meta}}Animated Drawings</span><span>{{icon:openai}}OpenAI</span><span>{{icon:elevenlabs}}ElevenLabs</span>
+      <span>{{icon:kakaotalk}}Kakao</span><span>{{icon:google}}Google</span><span>{{icon:googlecolab}}Colab</span>
+      <span><i class="badge">A</i>Azure</span><span>{{icon:github}}GitHub</span>
+    </div>
+    <div class="legend" style="flex: 0 0 300px; border-left: 1.5px solid #E2E5EC; padding-left: 24px;">
+      <div><svg width="44" height="10"><line x1="0" y1="5" x2="36" y2="5" stroke="#20263D" stroke-width="2.5"/><path d="M36 0 L44 5 L36 10 Z" fill="#20263D"/></svg>요청 · 응답 (HTTPS)</div>
+      <div><svg width="44" height="10"><line x1="0" y1="5" x2="36" y2="5" stroke="#7A5CC9" stroke-width="2.5" stroke-dasharray="6 4"/><path d="M36 0 L44 5 L36 10 Z" fill="#7A5CC9"/></svg>서버 → 외부 서비스</div>
+      <div><svg width="44" height="10"><line x1="0" y1="5" x2="36" y2="5" stroke="#D9962B" stroke-width="2.5" stroke-dasharray="3 4"/><path d="M36 0 L44 5 L36 10 Z" fill="#D9962B"/></svg>추후 연결</div>
+    </div>
+  </div>
+</div>
+
+<!-- 8 운영 환경 요약 -->
+<div class="card" style="--c: var(--ok); left: 1184px; top: 896px; width: 392px; height: 160px; padding-top: 26px;">
+  <div class="tab">8. 지금 상태</div>
+  <div class="check">실제 모델로 처음부터 끝까지 동작</div>
+  <div class="check">외부 서비스가 실패해도 이야기는 계속</div>
+  <div class="check todo">Azure 배포 · A2 모델 교체는 다음 단계</div>
+</div>
+
+<!-- 연결선 -->
+<svg class="wires" viewBox="0 0 1600 1080">
+  <defs>
+    <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 Z" fill="#20263D"/></marker>
+    <marker id="p" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 Z" fill="#7A5CC9"/></marker>
+    <marker id="o" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 Z" fill="#D9962B"/></marker>
+  </defs>
+  <!-- 1 ↔ 2 ↔ 3 -->
+  <line x1="316" y1="300" x2="342" y2="300" stroke="#20263D" stroke-width="2.5" marker-start="url(#a)" marker-end="url(#a)"/>
+  <line x1="566" y1="300" x2="592" y2="300" stroke="#20263D" stroke-width="2.5" marker-start="url(#a)" marker-end="url(#a)"/>
+  <!-- 3 ↓ 6, 3 ↓ 4 -->
+  <line x1="660" y1="462" x2="660" y2="542" stroke="#20263D" stroke-width="2.5" marker-start="url(#a)" marker-end="url(#a)"/>
+  <text class="wl" x="670" y="497">저장 · 조회</text>
+  <line x1="964" y1="462" x2="964" y2="542" stroke="#20263D" stroke-width="2.5" marker-start="url(#a)" marker-end="url(#a)"/>
+  <text class="wl" x="974" y="497">분석 · 영상 요청</text>
+  <!-- 3 → 5 -->
+  <line x1="1156" y1="190" x2="1182" y2="190" stroke="#7A5CC9" stroke-width="2.5" stroke-dasharray="6 4" marker-end="url(#p)"/>
+  <line x1="1156" y1="270" x2="1182" y2="270" stroke="#7A5CC9" stroke-width="2.5" stroke-dasharray="6 4" marker-end="url(#p)"/>
+  <line x1="1156" y1="350" x2="1182" y2="350" stroke="#7A5CC9" stroke-width="2.5" stroke-dasharray="6 4" marker-end="url(#p)"/>
+  <line x1="1156" y1="430" x2="1182" y2="430" stroke="#7A5CC9" stroke-width="2.5" stroke-dasharray="6 4" marker-end="url(#p)"/>
+  <!-- 7 → 4 -->
+  <line x1="1182" y1="790" x2="1156" y2="790" stroke="#D9962B" stroke-width="2.5" stroke-dasharray="3 4" marker-end="url(#o)"/>
+</svg>
+
+</body>
+</html>
