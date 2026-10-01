@@ -7,6 +7,10 @@
 | 기준 코드 | 프론트 `feat/backend-contract` · 백엔드 `dev` · AI `feat/gentle-motions` |
 | 근거 | 최종 인프라 구조 · 기능별 역할 정리(docx), 통합 정리 — 기술 구조와 예산(docx), 백엔드 API 계약 v0.1 |
 
+![DrawTale 시스템 아키텍처](assets/architecture/system-architecture.png)
+
+한 장 그림은 `tools/make_architecture.py`로 만든다 (3200×2160 PNG). 구조가 바뀌면 스크립트의 글자를 고치고 다시 만든다. 아래 Mermaid 그림과 표가 같은 내용을 나누어 설명한다.
+
 ## 한 줄 요약
 
 **브라우저(React) → 공개 API(FastAPI) → 내부 AI 서버(FastAPI + TorchServe)** 세 층이다.
