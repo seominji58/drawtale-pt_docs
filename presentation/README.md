@@ -26,7 +26,7 @@
 |---|---|
 | Frontend | `assets/screens/*.png` (화면설계서 v0.3 와이어프레임, S-06 은 실제 캐릭터 그림) |
 | Backend / PM | **`assets/feature-spec/feature-spec.png`** (기능 정의서 한 장), `01-system-architecture.md` 6장 데이터 위치 |
-| A1 | `03-flowchart.md` 4장(분석) · 7장(이야기 생성 · 렌더) 흐름도 |
+| A1 | **`assets/flowchart/flowchart.png`** (플로우차트 한 장), `03-flowchart.md` 4장(분석) · 7장(이야기 생성 · 렌더) 흐름도 |
 | A2 | **`assets/architecture/system-architecture.png`** (전체 시스템 아키텍처 한 장, A2 학습 영역 포함). 교체 모델 구조는 추후 AI 아키텍처에서 |
 
 Mermaid 그림을 이미지로 쓰려면 GitHub 에서 문서를 열고 캡처하거나 https://mermaid.live 에 붙여 넣어 PNG 로 받는다.

@@ -1,0 +1,181 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<title>DrawTale 플로우차트</title>
+<!--
+  03-flowchart.md 를 한 장으로. 가로는 사용자 여정 6단계, 세로는 누가 하는지(사람 · 화면 · 서버 · AI).
+  누구나 읽을 수 있게 쉬운 말로, 상자마다 한두 줄. 자세한 분기는 03 문서의 Mermaid 흐름도에 있다.
+-->
+<style>
+  :root {
+    --ink: #20263D; --soft: #4E5570; --faint: #7C8299; --navy: #26306A;
+    --person: #34A57F; --screen: #4256C8; --server: #5B6B8C; --ai: #8560D6; --warn: #D6455D; --ok: #2E9D6F; --amber: #D9962B;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { width: 1600px; height: 1080px; background: #FFFFFF; color: var(--ink);
+    font-family: "Malgun Gothic", "Apple SD Gothic Neo", sans-serif; position: relative; overflow: hidden; }
+  .head { position: absolute; left: 24px; top: 18px; right: 24px; height: 56px; display: flex; align-items: center; gap: 18px; }
+  .head h1 { font-size: 28px; letter-spacing: -0.5px; }
+  .head p { font-size: 16px; color: var(--soft); }
+  .head .svc { margin-left: auto; border: 1.5px solid var(--screen); color: var(--screen); border-radius: 10px;
+    padding: 8px 16px; font-size: 16px; font-weight: 700; }
+
+  /* 레인 */
+  .lane { position: absolute; left: 24px; right: 24px; border-radius: 12px; }
+  .lane .name { position: absolute; left: 0; top: 0; bottom: 0; width: 112px; border-radius: 12px 0 0 12px; color: #fff;
+    display: flex; flex-direction: column; align-items: center; justify-content: center; font-size: 16px; font-weight: 700; text-align: center; line-height: 1.35; }
+  .lane .name small { font-size: 12px; font-weight: 400; opacity: 0.9; }
+  .stage { position: absolute; top: 96px; height: 34px; display: flex; align-items: center; justify-content: center; }
+  .stage span { background: var(--navy); color: #fff; font-size: 15px; font-weight: 700; padding: 6px 16px; border-radius: 8px; white-space: nowrap; }
+
+  /* 상자 */
+  .n { position: absolute; transform: translate(-50%, -50%); display: flex; flex-direction: column; align-items: center;
+    justify-content: center; text-align: center; font-size: 15px; font-weight: 700; line-height: 1.4; padding: 6px 10px; }
+  .n small { display: block; font-size: 12.5px; font-weight: 400; color: var(--soft); }
+  .person { background: #EAF7F1; border: 2px solid var(--person); border-radius: 28px; }
+  .screen { background: #FFFFFF; border: 2px solid var(--screen); border-radius: 8px; }
+  .screen b { color: var(--screen); }
+  .server { background: #EEF1F6; border: 2px solid var(--server); border-radius: 8px; }
+  .ai { background: #F3EEFC; border: 2px solid var(--ai); border-radius: 8px; }
+  .adult { background: #FFF8EA; border: 2px dashed var(--amber); border-radius: 28px; }
+
+  .wl { font: 700 13px "Malgun Gothic", sans-serif; fill: var(--soft); }
+  .wlw { font: 700 13px "Malgun Gothic", sans-serif; fill: var(--warn); }
+  svg.wires { position: absolute; left: 0; top: 0; width: 1600px; height: 1080px; pointer-events: none; }
+
+  /* 아래 */
+  .card { position: absolute; border: 2px solid var(--c); border-radius: 14px; padding: 28px 18px 12px; background: #fff; }
+  .tab { position: absolute; top: -16px; left: 50%; transform: translateX(-50%); background: var(--navy); color: #fff;
+    font-size: 16px; font-weight: 700; padding: 6px 16px; border-radius: 8px; white-space: nowrap; }
+  .frow { display: flex; align-items: center; gap: 10px; margin-bottom: 11px; font-size: 14.5px; }
+  .chip { padding: 6px 12px; border-radius: 8px; font-weight: 700; white-space: nowrap; }
+  .c-warn { background: #FCE8EC; color: #A3293F; }
+  .c-err { background: #FFFFFF; border: 1.5px solid var(--screen); color: var(--screen); }
+  .c-back { background: #EAF7F1; color: #1F7A5E; }
+  .c-go { background: #EEF1F6; color: var(--server); }
+  .frow i { font-style: normal; color: #A6ADC2; font-weight: 700; }
+  .frow small { color: var(--faint); font-size: 12.5px; }
+  .job { display: flex; align-items: center; gap: 8px; margin-top: 6px; }
+  .job span { padding: 6px 12px; border-radius: 16px; font-size: 14px; font-weight: 700; background: #EEF1F6; color: var(--server); }
+  .job i { font-style: normal; color: #A6ADC2; font-weight: 700; }
+  .leg { display: grid; grid-template-columns: 1fr 1fr; gap: 8px 14px; margin-top: 14px; font-size: 13.5px; color: var(--soft); }
+  .leg div { display: flex; align-items: center; gap: 8px; }
+  .sw { width: 34px; height: 18px; }
+</style>
+</head>
+<body>
+
+<div class="head">
+  <h1>DrawTale 플로우차트</h1>
+  <p>그림 한 장이 움직이는 이야기가 되기까지, 누가 무엇을 하는지</p>
+  <div class="svc">전체 흐름 · 한 장 요약</div>
+</div>
+
+<!-- 단계 머리 (가운데 x: 265, 503, 742, 980, 1218, 1457) -->
+<div class="stage" style="left: 146px; width: 238px;"><span>1. 시작</span></div>
+<div class="stage" style="left: 384px; width: 238px;"><span>2. 그림</span></div>
+<div class="stage" style="left: 623px; width: 238px;"><span>3. 캐릭터</span></div>
+<div class="stage" style="left: 861px; width: 238px;"><span>4. 네 칸 고르기</span></div>
+<div class="stage" style="left: 1099px; width: 238px;"><span>5. 이야기 생성</span></div>
+<div class="stage" style="left: 1338px; width: 238px;"><span>6. 보기</span></div>
+
+<!-- 레인 -->
+<div class="lane" style="top: 140px; height: 144px; background: #F6FBF8;"><div class="name" style="background: var(--person);">아이 · 어른<small>하는 일</small></div></div>
+<div class="lane" style="top: 292px; height: 186px; background: #F5F7FD;"><div class="name" style="background: var(--screen);">웹앱 화면<small>React</small></div></div>
+<div class="lane" style="top: 486px; height: 150px; background: #F6F7FA;"><div class="name" style="background: var(--server);">서버<small>FastAPI</small></div></div>
+<div class="lane" style="top: 644px; height: 124px; background: #F9F6FE;"><div class="name" style="background: var(--ai);">AI<small>Meta 모델</small></div></div>
+
+<!-- 1. 시작 -->
+<div class="n person" style="left: 265px; top: 212px; width: 190px; height: 54px;">앱을 연다</div>
+<div class="n screen" style="left: 265px; top: 385px; width: 210px; height: 76px;"><b>S-01 시작</b><small>처음이면 S-14를 거쳐서</small></div>
+
+<!-- 2. 그림 -->
+<div class="n person" style="left: 503px; top: 212px; width: 200px; height: 64px;">그림을 찍거나<br>화면에 그린다</div>
+<div class="n screen" style="left: 503px; top: 385px; width: 214px; height: 76px;"><b>S-03 그림 올리기</b><small>또는 S-03D 화면에 그리기</small></div>
+
+<!-- 3. 캐릭터 -->
+<div class="n adult" style="left: 742px; top: 212px; width: 210px; height: 64px;">어른이 관절 맞추기<small>S-06 · 잘 안 움직일 때만</small></div>
+<div class="n screen" style="left: 742px; top: 385px; width: 214px; height: 76px;"><b>S-04 → S-05</b><small>기다리기 · 내 친구 확인</small></div>
+<div class="n server" style="left: 742px; top: 561px; width: 200px; height: 64px;">분석 맡기기<small>Job 으로 · 결과 저장</small></div>
+<div class="n ai" style="left: 742px; top: 706px; width: 210px; height: 64px;">캐릭터 · 관절 15개 찾기<small>움직일 영역도 함께</small></div>
+
+<!-- 4. 네 칸 -->
+<div class="n person" style="left: 980px; top: 212px; width: 214px; height: 70px;">아이가 네 칸을 고른다<small>장소 → 문제 → 행동 → 결과</small></div>
+<div class="n screen" style="left: 980px; top: 385px; width: 210px; height: 76px;"><b>S-07 이야기 만들기</b><small>카드 고르기 · 말로 덧붙이기</small></div>
+
+<!-- 5. 이야기 생성 -->
+<div class="n screen" style="left: 1218px; top: 385px; width: 200px; height: 76px;"><b>S-08 기다리기</b><small>이야기를 쓰고 있어요</small></div>
+<div class="n server" style="left: 1218px; top: 561px; width: 214px; height: 64px;">문장 만들기 · 내용 확인<small>읽어 줄 목소리도</small></div>
+<div class="n ai" style="left: 1218px; top: 706px; width: 210px; height: 64px;">움직이는 영상 만들기<small>내 그림 + 관절 → MP4</small></div>
+
+<!-- 6. 보기 -->
+<div class="n person" style="left: 1457px; top: 212px; width: 200px; height: 64px;">보고 듣고<br>순서를 맞춘다</div>
+<div class="n screen" style="left: 1457px; top: 385px; width: 214px; height: 76px;"><b>S-09 → S-10 → S-11</b><small>보기 · 순서 맞추기 · 다 했어요</small></div>
+
+<!-- 아래: 실패하면 이렇게 -->
+<div class="card" style="--c: var(--warn); left: 24px; top: 800px; width: 1070px; height: 262px;">
+  <div class="tab">실패하면 이렇게 — 아이 탓으로 느끼지 않게</div>
+  <div class="frow"><span class="chip c-warn">그림에서 캐릭터를 못 찾음</span><i>→</i><span class="chip c-err">E-01 「그림에서 친구를 못 찾았어요」</span><i>→</i><span class="chip c-back">S-03 다시 찍기</span></div>
+  <div class="frow"><span class="chip c-warn">이야기에 맞지 않는 말</span><i>→</i><span class="chip c-err">E-01 「이 이야기는 만들 수 없어요」</span><i>→</i><span class="chip c-back">S-07 다시 고르기</span><small>덧붙인 말만 지워요</small></div>
+  <div class="frow"><span class="chip c-warn">너무 오래 걸림</span><i>→</i><span class="chip c-err">E-01 「시간이 오래 걸리고 있어요」</span><i>→</i><span class="chip c-back">다시 하기</span><small>분석 30초 · 이야기 300초</small></div>
+  <div class="frow" style="margin-bottom: 0;"><span class="chip c-warn">음성 · 영상만 실패</span><i>→</i><span class="chip c-go">멈추지 않아요</span><i>→</i><span class="chip c-back">브라우저 목소리 · 그림으로 계속</span></div>
+</div>
+
+<!-- 아래: 진행 상태 · 범례 -->
+<div class="card" style="--c: #C5CAD6; left: 1114px; top: 800px; width: 462px; height: 262px;">
+  <div class="tab">진행 상태 (Job) · 범례</div>
+  <div class="job"><span>대기</span><i>→</i><span>처리 중</span><i>→</i><span style="background: #E4F4EC; color: var(--ok);">완료</span><i>·</i><span style="background: #FCE8EC; color: #A3293F;">실패</span></div>
+  <div style="font-size: 13.5px; color: var(--soft); margin-top: 8px;">화면은 1.5초마다 상태를 확인하고, 끝나면 결과를 받아요</div>
+  <div class="leg">
+    <div><svg class="sw"><rect x="1" y="1" width="32" height="16" rx="8" fill="#EAF7F1" stroke="#34A57F" stroke-width="2"/></svg>사람이 하는 일</div>
+    <div><svg class="sw"><rect x="1" y="1" width="32" height="16" rx="3" fill="#fff" stroke="#4256C8" stroke-width="2"/></svg>화면</div>
+    <div><svg class="sw"><rect x="1" y="1" width="32" height="16" rx="3" fill="#EEF1F6" stroke="#5B6B8C" stroke-width="2"/></svg>서버 처리</div>
+    <div><svg class="sw"><rect x="1" y="1" width="32" height="16" rx="3" fill="#F3EEFC" stroke="#8560D6" stroke-width="2"/></svg>AI 처리</div>
+    <div><svg class="sw"><line x1="0" y1="9" x2="34" y2="9" stroke="#26306A" stroke-width="2.5"/></svg>다음 단계</div>
+    <div><svg class="sw"><line x1="0" y1="9" x2="34" y2="9" stroke="#D9962B" stroke-width="2.5" stroke-dasharray="5 4"/></svg>필요할 때만</div>
+  </div>
+</div>
+
+<!-- 연결선 -->
+<svg class="wires" viewBox="0 0 1600 1080">
+  <defs>
+    <marker id="a" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 Z" fill="#26306A"/></marker>
+    <marker id="g" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 Z" fill="#7C8299"/></marker>
+    <marker id="o" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse"><path d="M0 0 L10 5 L0 10 Z" fill="#D9962B"/></marker>
+  </defs>
+  <g stroke="#26306A" stroke-width="2.5" fill="none">
+    <!-- 사람 → 화면 -->
+    <line x1="265" y1="239" x2="265" y2="345" marker-end="url(#a)"/>
+    <line x1="503" y1="244" x2="503" y2="345" marker-end="url(#a)"/>
+    <line x1="980" y1="247" x2="980" y2="345" marker-end="url(#a)"/>
+    <line x1="1457" y1="244" x2="1457" y2="345" marker-end="url(#a)"/>
+    <!-- 화면 → 화면 (가로 주 흐름) -->
+    <line x1="365" y1="385" x2="396" y2="385" marker-end="url(#a)"/>
+    <line x1="608" y1="385" x2="635" y2="385" marker-end="url(#a)"/>
+    <line x1="847" y1="385" x2="873" y2="385" marker-end="url(#a)"/>
+    <line x1="1085" y1="385" x2="1116" y2="385" marker-end="url(#a)"/>
+    <line x1="1318" y1="385" x2="1348" y2="385" marker-end="url(#a)"/>
+    <!-- 화면 ↕ 서버 ↕ AI -->
+    <line x1="742" y1="425" x2="742" y2="527" marker-start="url(#a)" marker-end="url(#a)"/>
+    <line x1="742" y1="595" x2="742" y2="672" marker-start="url(#a)" marker-end="url(#a)"/>
+    <line x1="1218" y1="425" x2="1218" y2="527" marker-start="url(#a)" marker-end="url(#a)"/>
+    <line x1="1218" y1="595" x2="1218" y2="672" marker-start="url(#a)" marker-end="url(#a)"/>
+  </g>
+  <text class="wl" x="752" y="484">그림 보내기 · 관절 받기</text>
+  <text class="wl" x="752" y="642">분석 요청 · 결과</text>
+  <text class="wl" x="1228" y="484">네 칸 보내기 · 이야기 받기</text>
+  <text class="wl" x="1228" y="642">영상 요청 · MP4</text>
+  <!-- 화면 → 사람: 아이가 화면을 보고 고른다 -->
+  <!-- 어른 관절 맞추기 (필요할 때만) -->
+  <path d="M 700 345 L 700 246" stroke="#D9962B" stroke-width="2.5" stroke-dasharray="5 4" fill="none" marker-end="url(#o)"/>
+  <path d="M 784 246 L 784 345" stroke="#D9962B" stroke-width="2.5" stroke-dasharray="5 4" fill="none" marker-end="url(#o)"/>
+  <text x="625" y="300" style="font: 700 12.5px 'Malgun Gothic'; fill: #9A6410;">잘 안 움직이면</text>
+  <text x="792" y="300" style="font: 700 12.5px 'Malgun Gothic'; fill: #9A6410;">저장하고 돌아옴</text>
+  <!-- 새 이야기: 같은 캐릭터로 S-07 -->
+  <path d="M 1412 347 L 1412 318 L 1030 318 L 1030 345" stroke="#7C8299" stroke-width="2.5" fill="none" marker-end="url(#g)"/>
+  <text class="wl" x="1120" y="310">새 이야기 만들기 (같은 캐릭터)</text>
+</svg>
+
+</body>
+</html>

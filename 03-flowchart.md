@@ -6,6 +6,10 @@
 | 기준일 | 2026-09-30 |
 | 근거 | 화면 설계서 v0.3, 백엔드 `services/jobs.py` · `story_writer.py`, AI `runtime/ai_server`, 프론트 `src/api/index.ts` |
 
+![DrawTale 플로우차트 한 장](assets/flowchart/flowchart.png)
+
+위 그림은 전체 흐름을 한 장으로 줄인 것이다 (`tools/poster/flowchart.html`). 가로는 여정 6단계, 세로는 누가 하는지(아이 · 어른 / 화면 / 서버 / AI)다. 자세한 분기는 아래 Mermaid 흐름도 10개에 그대로 있다.
+
 사용자가 화면을 지나는 순서와, 그 뒤에서 서버가 처리하는 순서를 그린다. 그림은 Mermaid로 되어 있어 GitHub에서 바로 보인다.
 
 | 번호 | 흐름 | 관점 |
