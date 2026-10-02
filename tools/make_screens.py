@@ -319,8 +319,11 @@ def s03():
     w.rect(356, 568, 312, 44, fill=BG, line=LINE, r=12, dash=True)
     w.text(376, 590, "확인용", 15, color=SOFT, anchor="lm")
     w.link(440, 579, "샘플 그림으로 해보기", 16)
+    # ⑨ 받지 않은 파일 안내 — ② 자리에 대신 나타난다 (그림에서는 옆에 따로 보인다)
+    w.rect(686, 568, 226, 44, fill="#FFF6E3", line="#E5BE5E", r=12, dash=True)
+    w.text(799, 590, "이 그림은 열 수 없어요", 15, anchor="mm")
     w.mark(1, 112, RAIL + 20); w.mark(2, 292, 540); w.mark(3, 134, H - 104)
-    w.mark(4, 408, H - 104); w.mark(5, 682, H - 104); w.mark(8, 356, 568)
+    w.mark(4, 408, H - 104); w.mark(5, 682, H - 104); w.mark(8, 356, 568); w.mark(9, 686, 568)
     w.save("S-03")
 
     w = Wire()
@@ -470,9 +473,13 @@ def _s06_rest(w, sx, sy, blank=False, save_as=None):
 
     w.rect(24, RAIL + 508, W - 48, 44, fill="#EEF0F4", line=None, r=12)
     w.text(44, RAIL + 530, "점을 끌어서 그림의 관절 자리에 맞춰 주세요", 16, anchor="lm")
+    # ⑦ 처음 자리로 되돌리기 — 관절을 옮겼을 때만 (AI 가 처음 짚은 자리와 다를 때)
+    w.rect(W - 360, RAIL + 512, 330, 36, fill="#EEF0F4", line=LINE, r=10, dash=True)
+    w.text(W - 345, RAIL + 530, "잘못 옮겼나요?", 14, color=SOFT, anchor="lm")
+    w.link(W - 230, RAIL + 520, "처음 자리로 되돌리기", 15)
 
     w.mark(1, sx + 4, sy + 4); w.mark(2, lx + 4, ly + 4); w.mark(3, 28, RAIL + 512)
-    w.mark(4, 290, H - 92); w.mark(5, 534, H - 92); w.mark(6, 26, 14)
+    w.mark(4, 290, H - 92); w.mark(5, 534, H - 92); w.mark(6, 26, 14); w.mark(7, W - 360, RAIL + 512)
     w.save(save_as or ("S-06-blank" if blank else "S-06"))
 
 
