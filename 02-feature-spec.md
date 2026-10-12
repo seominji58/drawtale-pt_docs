@@ -48,6 +48,21 @@ AI는 아이가 고른 네 칸을 문장으로 다듬고, 아이 그림을 움�
 
 **기능을 더하거나 문구를 정할 때 이 문장을 기준으로 삼는다.**
 
+### 1-4. 이 정의의 근거
+
+| 무엇 | 어디서 | 상태 |
+|---|---|---|
+| 대상 규모 · 지원 공백 | 경계선 지능 첫 실태조사(한국보건사회연구원, 2026) — 아동 · 청소년 5.1% 위험군, 보호자 85.1%가 사비 지출. 특수교육통계 124,195명 | [출처 4 · 5](presentation/sources.md) |
+| 양육 · 교육 환경의 어려움 | 보호자 경험 연구 3건 (김초은 외 2023, 손성화 · 백수진 2025, 임희진 · 구자경 2019) | [출처 1 ~ 3](presentation/sources.md) |
+| 그림 · 이야기 활동의 가치 | Pitri & Michaelidou (2025) 서사적 그리기와 초기 문해. **아동 1명 사례연구라 「가능성」으로만 쓴다** | [출처 6](presentation/sources.md) |
+| 표현 매체를 여러 개 둘 것 | CAST UDL Guidelines 3.0 — drawing · storytelling · animation | [출처 7](presentation/sources.md) |
+| **AI가 대신 만들면 안 되는 이유** | Alan Turing Institute (2025) — 「generative AI adds value **alongside – not instead of**」 | [출처 12](presentation/sources.md) |
+| 기존 서비스의 공백 | Drawings Alive · Drawalive · Meta 데모 조사 — **아이가 이야기를 고르는 기능이 없다** | [출처 10 · 11](presentation/sources.md) |
+
+> **여기까지는 전부 문헌 · 공개 자료다.** 현장 전문가나 보호자를 만난 기록은 아직 없다.
+> 아래 설계(지원 수준, 네 칸 구조, 카드 수, 상호작용 수치)는 **검증되지 않은 가정**이며,
+> 검증 계획은 「06 현장 자문 계획」에 있다.
+
 ---
 
 ## 2. MVP 범위
