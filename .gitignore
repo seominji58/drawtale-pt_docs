@@ -2,3 +2,6 @@ node_modules/
 *.tmp
 ~$*
 __pycache__/
+
+# 루트에 둔 작업용 pptx (추적하지 않는다)
+DrawTale_1002.pptx
