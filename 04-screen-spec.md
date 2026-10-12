@@ -621,6 +621,8 @@ flowchart TD
 
 **서버 오류 코드 → 화면 코드** (프론트 `src/api/index.ts` 한 곳에서 바꾼다)
 
+아이가 읽을 문장은 **프론트가 정한다.** 서버가 보낸 `message` 는 어른 · 기록용이고 아이 화면에 띄우지 않는다 (`01` 5-2).
+
 | 서버 코드 | 화면 코드 |
 |---|---|
 | `NO_CHARACTER_DETECTED` | `NO_CHARACTER` |
