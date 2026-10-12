@@ -343,7 +343,7 @@ flowchart TD
 ```mermaid
 flowchart LR
     subgraph SRC[어디서 나나]
-        A1[AI analyze<br/>NO_CHARACTER_DETECTED<br/>INVALID_IMAGE · MODEL_UNAVAILABLE]
+        A1[AI analyze<br/>NO_CHARACTER_DETECTED · MULTIPLE_CHARACTERS<br/>LOW_CONFIDENCE · INVALID_IMAGE · MODEL_UNAVAILABLE]
         A2[Backend<br/>FILE_TOO_LARGE · AI_TIMEOUT<br/>CONTENT_BLOCKED · INTERNAL_ERROR]
         A3[Frontend<br/>대기 시간 초과]
     end
@@ -353,19 +353,25 @@ flowchart LR
     A3 --> MAP
 
     MAP -->|NO_CHARACTER_DETECTED| E1[NO_CHARACTER<br/>그림에서 친구를 못 찾았어요]
+    MAP -->|MULTIPLE_CHARACTERS| E1b[MULTIPLE_CHARACTERS<br/>친구가 여러 명이에요]
+    MAP -->|LOW_CONFIDENCE| E1c[LOW_CONFIDENCE<br/>그림이 잘 안 보여요]
     MAP -->|INVALID_IMAGE · FILE_TOO_LARGE| E2[UNSUPPORTED_IMAGE<br/>이 그림은 열 수 없어요]
     MAP -->|AI_TIMEOUT · 시간 초과| E3[ENGINE_TIMEOUT<br/>시간이 오래 걸리고 있어요]
     MAP -->|CONTENT_BLOCKED| E4[CONTENT_BLOCKED<br/>이 이야기는 만들 수 없어요]
     MAP -->|그 밖 전부| E5[ENGINE_ERROR<br/>잠깐 문제가 생겼어요]
 
     E1 --> U[S-03 다시 찍기]
+    E1b --> U
+    E1c --> U
     E2 --> U
     E3 --> U
     E4 --> ST[덧붙인 말 지우고<br/>S-07 다시 고르기]
     E5 --> H[S-01 처음으로]
 ```
 
+- 화면 오류 코드는 **7종**이다. 전체 목록과 문구는 [04. 화면 설계서 E-01](04-screen-spec.md)에 있다
 - 모든 E-01에는 2차 행동 「처음으로」가 있다
+- **같은 그림으로 2회 연속 걸러지면 S-03D(화면에 그리기)로 보낸다. 3회면 어른을 부른다** (`05` 4-3)
 - 서버의 `message`(어른용 한국어 문장)는 아이 화면에 띄우지 않는다
 - 오류가 아닌 부분 실패(음성 없음, 애니메이션 대신 그림)는 E-01로 가지 않는다 (7장)
 - S-03의 형식·용량 검사, S-06의 저장 실패, S-07의 음성 인식 실패는 E-01로 가지 않고 그 화면에서 안내한다
