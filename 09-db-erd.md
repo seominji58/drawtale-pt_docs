@@ -50,7 +50,7 @@ UUID 는 그렇게 짐작할 수 없다. 다만 이것만으로 막지는 않고
 
 | 표 | 무엇이 들어 있나 | 눈여겨볼 것 |
 |---|---|---|
-| **characters** | 올린 그림 하나와 그 분석 결과 | 19칸으로 가장 크다. 아래에서 따로 본다 |
+| **characters** | 올린 그림 하나와 그 분석 결과 | 21칸으로 가장 크다. 아래에서 따로 본다 |
 | **joint_corrections** | 어른이 관절을 고친 기록 | **덮어쓰지 않고 쌓는다.** 가장 마지막 줄이 지금 관절이다 |
 
 `joint_corrections` 를 쌓는 이유는 **되돌릴 수 있어야 하기 때문**이다.
@@ -60,8 +60,25 @@ UUID 는 그렇게 짐작할 수 없다. 다만 이것만으로 막지는 않고
 
 | 표 | 무엇이 들어 있나 | 눈여겨볼 것 |
 |---|---|---|
-| **stories** | 고른 네 칸과 만들어진 이야기 | `audio_blob_path` · `animation_blob_path` 는 **비어 있을 수 있다** (`03` 6-0) |
+| **stories** | 고른 네 칸과 만들어진 이야기 | `audio_blob_path` · `animation_blob_path` 는 **비어 있을 수 있다** (`03` 6-0). 긴 이야기는 쪽 대본이 `book` 에 들어간다 |
 | **story_activities** | 순서 맞추기를 한 기록 | 같은 이야기를 다시 하면 줄이 하나 더 생긴다 |
+
+#### stories 에 늘어난 칸 (2026-10-12)
+
+읽어주기 두 판과 긴 이야기가 들어오면서 일곱 칸이 늘었다.
+
+| 칸 | 무엇 | 기능 |
+|---|---|---|
+| `length` | `short`(네 문장) · `long`(쪽 그림책) | F-STY-11 |
+| `book` | 쪽 대본 — 제목, 쪽마다 단계 · 동작 · 글 · 아이 말 (JSON) | F-STY-11 |
+| `voice_mode` | `narration` · `characters` | F-STY-12 |
+| `protagonist_voice` | `girl` · `boy` — **어른이 고른다.** 그림이나 이름으로 짐작하지 않는다 | F-STY-12 |
+| `voice_cast` | 인물 이름 → 목소리 id (JSON) | F-STY-12 |
+| `protagonist_name` | **아이가 지은 이름.** 비우면 「나」로 쓴다 | F-STY-13 |
+| `spoken` | 아이가 카드 대신 말로 덧붙인 단계 | F-STY-09 |
+
+> **`protagonist_name` 은 아이 이름이 섞일 수 있는 칸이다.**
+> 보관 기한을 정하지 않았다 ([데이터 처리 지도 4-3](policy/데이터-처리-지도.md)).
 
 ### 작업 쪽
 
@@ -81,6 +98,7 @@ UUID 는 그렇게 짐작할 수 없다. 다만 이것만으로 막지는 않고
 | **주인과 설정** | `user_id` `keep_original` `original_deleted_at` | 올릴 때 · 원본을 지울 때 |
 | **AI 가 찾은 것** | `bbox` `ai_joints` `detection_confidence` `mask_blob_path` `ai_request_id` | 분석이 끝날 때 |
 | **어떻게 찾았는지** | `model_version` `pipeline_version` `coordinate_space` `processing_time_ms` | 분석이 끝날 때 |
+| **미리보기** | `preview_blob_path` `preview_status` | 분석 직후, 관절을 고친 뒤 (F-CHR-09) |
 
 마지막 덩어리가 왜 있냐면, **모델을 바꿔도 예전 결과가 어느 모델에서 나온 것인지 알아야 하기 때문**이다.
 A2 가 포즈 모델을 바꾸면 `model_version` 이 달라지고, 그 전후를 비교할 수 있다 (F-CHR-08).
@@ -161,8 +179,8 @@ users ──1:N──▶ characters ──1:N──▶ stories ──1:N──�
 
 | 지금까지 | |
 |---|---|
-| 마이그레이션 | 7개 |
-| 마지막 | `e1f2a3b4c5d6` — characters 에 user_id 추가 (2026-10-12) |
+| 마이그레이션 | 13개 |
+| 마지막 | `d6e9f0a1b2c3` — stories 에 length · spoken · book 추가 (2026-10-12) |
 
 ---
 
