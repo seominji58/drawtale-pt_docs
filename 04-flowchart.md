@@ -293,7 +293,7 @@ flowchart TD
     SID -->|없음 · 목 AI| IMG[애니메이션 자리에 원본 그림]
     SID -->|있음| RND[[AI 서버 render<br/>request_id · 최근 관절 · 동작]]
     RND -->|UNKNOWN_MOTION| BASE[원래 동작으로 다시 렌더<br/>wave_hello · jumping] --> MP4
-    RND -->|성공 약 35~40초| MP4[(results/id.mp4)]
+    RND -->|성공 약 8초| MP4[(results/id.mp4)]
     RND -->|그 밖 실패| FAIL[Job failed<br/>AI 오류 코드]
 
     MP4 --> DONE[[Job succeeded]]
