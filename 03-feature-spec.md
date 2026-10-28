@@ -113,12 +113,12 @@ AI는 아이가 고른 네 칸을 문장으로 다듬고, 아이 그림을 움�
 
 | 무엇 | 어디서 | 상태 |
 |---|---|---|
-| 대상 규모 · 지원 공백 | 경계선 지능 첫 실태조사(한국보건사회연구원, 2026) — 아동 · 청소년 5.1% 위험군, 보호자 85.1%가 사비 지출. 특수교육통계 124,195명 | [출처 4 · 5](presentation/sources.md) |
-| 양육 · 교육 환경의 어려움 | 보호자 경험 연구 3건 (김초은 외 2023, 손성화 · 백수진 2025, 임희진 · 구자경 2019) | [출처 1 ~ 3](presentation/sources.md) |
-| 그림 · 이야기 활동의 가치 | Pitri & Michaelidou (2025) 서사적 그리기와 초기 문해. **아동 1명 사례연구라 「가능성」으로만 쓴다. 효과를 주장하는 근거로 쓰지 않는다** | [출처 6](presentation/sources.md) |
-| 표현 매체를 여러 개 둘 것 | CAST UDL Guidelines 3.0 — drawing · storytelling · animation | [출처 7](presentation/sources.md) |
-| **AI가 대신 만들면 안 되는 이유** | Alan Turing Institute (2025) — 「generative AI adds value **alongside – not instead of**」 | [출처 12](presentation/sources.md) |
-| 기존 서비스의 공백 | Drawings Alive · Drawalive · Meta 데모 조사 — **아이가 이야기를 고르는 기능이 없다** | [출처 10 · 11](presentation/sources.md) |
+| 대상 규모 · 지원 공백 | 경계선 지능 첫 실태조사(한국보건사회연구원, 2026) — 아동 · 청소년 5.1% 위험군, 보호자 85.1%가 사비 지출. 특수교육통계 124,195명 | [출처 4 · 5](배경조사-출처.md) |
+| 양육 · 교육 환경의 어려움 | 보호자 경험 연구 3건 (김초은 외 2023, 손성화 · 백수진 2025, 임희진 · 구자경 2019) | [출처 1 ~ 3](배경조사-출처.md) |
+| 그림 · 이야기 활동의 가치 | Pitri & Michaelidou (2025) 서사적 그리기와 초기 문해. **아동 1명 사례연구라 「가능성」으로만 쓴다. 효과를 주장하는 근거로 쓰지 않는다** | [출처 6](배경조사-출처.md) |
+| 표현 매체를 여러 개 둘 것 | CAST UDL Guidelines 3.0 — drawing · storytelling · animation | [출처 7](배경조사-출처.md) |
+| **AI가 대신 만들면 안 되는 이유** | Alan Turing Institute (2025) — 「generative AI adds value **alongside – not instead of**」 | [출처 12](배경조사-출처.md) |
+| 기존 서비스의 공백 | Drawings Alive · Drawalive · Meta 데모 조사 — **아이가 이야기를 고르는 기능이 없다** | [출처 10 · 11](배경조사-출처.md) |
 
 > **배경조사의 경계선 지능 연구들은 「왜 이런 활동이 필요한가」를 보이는 데 쓴다.**
 > 그 진단을 받은 아이를 대상으로 한정한다는 뜻이 아니고,
