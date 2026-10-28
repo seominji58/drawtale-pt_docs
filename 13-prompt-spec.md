@@ -21,9 +21,9 @@
 
 | 무엇 | 어디 | 모델 |
 |---|---|---|
-| **짧은 이야기** (네 문장) | `story_writer.SYSTEM_PROMPT` | `gpt-4o-mini` |
+| **짧은 이야기** (네 문장) | `story_writer.SYSTEM_PROMPT` | **Claude Opus 5.5** (effort low, 2026-10-28 부터. 예비 `gpt-4o-mini`) |
 | **긴 이야기** (7~11쪽 그림책) | `book.SYSTEM` | **Claude Opus 5.5** (예비 `gpt-5.4-mini`) |
-| **인물 목소리 대본** (짧은 판) | `story_writer.script_prompt()` | `gpt-4o-mini` |
+| **인물 목소리 대본** (짧은 판) | `story_writer.script_prompt()` | **Claude Opus 5.5** (effort low. 예비 `gpt-4o-mini`) |
 | **내용 검사** | `omni-moderation-latest` (프롬프트 없음) | — |
 | **읽어 주는 말투** | `tts.VOICE_INSTRUCTIONS` · 감정 태그 | ElevenLabs `eleven_v4` |
 | 그림 (아이콘 · 배경 · 삽화) | 프론트 `docs/art-direction.md` | GPT Image |
@@ -148,7 +148,9 @@
 | | |
 |---|---|
 | 언제 | S-13 「이야기 길이」가 **짧게**일 때 |
-| 모델 | `gpt-4o-mini`, `temperature` 0.8, 최대 300토큰 |
+| 모델 | **Claude Opus 5.5**, effort low (2026-10-28 부터). 실패하면 그 시도만 `gpt-4o-mini`(temperature 0.8, 최대 300토큰) |
+| 왜 바꿨나 | 미리 만든 시험에서 `gpt-4o-mini` 가 「어른을 불렀어요 → 친구가 생겼어요」를 「그 어른이 친구가 되었어요」로, 「그 자리에서 기다렸어요」 뒤에 고르지 않은 「누가 나를 도와줘서」를 붙였습니다 |
+| 인물 | 고르지 않은 인물을 데려오지 않습니다 (엄마 · 친구와 함께 갔다고 쓰지 않음) — Claude 로 바꾼 뒤 「엄마랑 숲에」가 나와 넣었습니다 |
 | 받는 것 | 네 문장 (단계마다 하나) |
 
 규칙은 2장의 다섯 가지와 같고, 더해서 **「네 단계 내용을 반드시 모두 담는다」**가 있습니다.

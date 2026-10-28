@@ -47,8 +47,8 @@ flowchart LR
     end
 
     subgraph Ext["외부 서비스"]
-        OAI["OpenAI<br/>gpt-4o-mini · moderation · TTS"]
-        ANT["Anthropic<br/>Claude Opus 5.5 · 긴 이야기 대본"]
+        OAI["OpenAI<br/>moderation · TTS · 대본 예비"]
+        ANT["Anthropic<br/>Claude Opus 5.5 · 이야기 대본 전부"]
         EL["ElevenLabs TTS<br/>(선택)"]
         SNS["카카오 · 구글<br/>OAuth"]
     end
@@ -84,7 +84,7 @@ flowchart LR
 
 | 서비스 | 쓰는 곳 | 없거나 실패하면 |
 |---|---|---|
-| OpenAI `gpt-4o-mini` | 네 칸을 짧은 이야기 네 문장으로 | 틀 문장 「오늘 나는 …에 갔어요. 그런데 ….」 |
+| **Anthropic Claude Opus 5.5** (2026-10-28 부터, 예비 OpenAI `gpt-4o-mini`) | 네 칸을 짧은 이야기 네 문장으로 | 틀 문장 「오늘 나는 …에 갔어요. 그런데 ….」 |
 | **Anthropic Claude Opus 5.5** | **긴 이야기** — 7~11쪽 그림책 대본. **카드만 고른 이야기는 미리 만들어 둔 것을 꺼내므로 부르지 않는다** (덧붙임 · 보호자 입력일 때만) | OpenAI `gpt-5.4-mini` → 그것도 안 되면 틀 문장 그림책 |
 | OpenAI `omni-moderation-latest` | 입력과 만든 문장을 **앞뒤로 두 번** 검사 | 걸리면 이야기를 만들지 않는다 (`CONTENT_BLOCKED`) |
 | **ElevenLabs `eleven_v4`** 또는 OpenAI `gpt-4o-mini-tts` | 이야기 낭독 mp3 (`TTS_PROVIDER`). 인물 목소리 판은 `text-to-dialogue` | 음성 없이 성공. 브라우저 음성으로 읽는다 |
@@ -447,7 +447,7 @@ Backend 가 그것을 아이가 읽을 수 있는 말로 옮긴다. 내부 사�
 | **마스크 생성** | 적응형 이진화 → 닫힘 · 팽창 → flood fill, 가장 큰 덩어리 하나. 닫힘 횟수를 2 → 6 → 12 → 20으로 올려 가며 재시도하고, 관절이 마스크 위에 얹히는 비율로 뒤집힘을 판정 |
 | **관절 보정 반영** | 보정 이력 중 **가장 최근 것**을 렌더에 쓴다. 보정이 없으면 AI 관절 |
 | **카드 이야기** | **미리 만들어 사람이 읽은 512편**을 서버에서 꺼낸다 ([13](13-prompt-spec.md) 1-1). 아래 모델은 덧붙임 · 보호자 입력일 때만 부른다 |
-| **이야기 문장** | `gpt-4o-mini`. 정확히 네 문장, 15~25자, 쉬운 낱말, 주인공 「나」, 「~어요」, 무섭거나 슬픈 결말 금지. 키가 없거나 실패하면 틀 문장 |
+| **이야기 문장** | Claude Opus 5.5 (effort low, 실패하면 그 시도만 `gpt-4o-mini`). 정확히 네 문장, 15~25자, 쉬운 낱말, 주인공 「나」, 「~어요」, 무섭거나 슬픈 결말 금지. 키가 없거나 실패하면 틀 문장 |
 | **검열** | 입력과 결과를 **앞뒤 두 번** `omni-moderation-latest`로 검사 |
 | **동작 선택** | 행동 문구에 달려 · 뛰 · 점프 · 춤 · 운동이 있으면 `jumping_gentle`, 그 밖은 `wave_hello_gentle` |
 | **렌더** | 보정 관절 + 마스크 → 화면 없는 환경에서 GIF 렌더 → ffmpeg으로 MP4 변환 |

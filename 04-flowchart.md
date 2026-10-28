@@ -276,7 +276,7 @@ flowchart TD
     KEY -->|없음| TPL[틀 문장<br/>오늘 나는 …에 갔어요. 그런데 ….]
     KEY -->|있음| M1{입력 검열<br/>omni-moderation}
     M1 -->|걸림| BLK[CONTENT_BLOCKED<br/>Job failed]
-    M1 -->|통과| GPT[gpt-4o-mini<br/>네 문장 · 15~25자 · 쉬운 낱말<br/>주인공 나 · ~어요 · 슬픈 결말 금지]
+    M1 -->|통과| GPT[Claude Opus 5.5<br/>네 문장 · 15~25자 · 쉬운 낱말<br/>주인공 나 · ~어요 · 슬픈 결말 금지]
     GPT -->|실패 · 빈 응답| TPL
     GPT --> M2{결과 검열}
     M2 -->|걸림| BLK
