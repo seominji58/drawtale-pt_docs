@@ -25,7 +25,7 @@
 | **긴 이야기** (7~11쪽 그림책) | `book.SYSTEM` | **Claude Opus 5.5** (예비 `gpt-5.4-mini`) |
 | **인물 목소리 대본** (짧은 판) | `story_writer.script_prompt()` | **Claude Opus 5.5** (effort low. 예비 `gpt-4o-mini`) |
 | **내용 검사** | `omni-moderation-latest` (프롬프트 없음) | — |
-| **읽어 주는 말투** | `tts.VOICE_INSTRUCTIONS` · 감정 태그 | ElevenLabs `eleven_v4` |
+| **읽어 주는 말투** | `tts.VOICE_INSTRUCTIONS` · 감정 태그 | ElevenLabs `eleven_v4_turbo` |
 | 그림 (아이콘 · 배경 · 삽화) | 프론트 `docs/art-direction.md` | GPT Image |
 | 효과음 | 프론트 `docs/sound-direction.md` | VARCO Sound |
 

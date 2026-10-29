@@ -87,7 +87,7 @@ flowchart LR
 | **Anthropic Claude Opus 5.5** (2026-10-28 부터, 예비 OpenAI `gpt-4o-mini`) | 네 칸을 짧은 이야기 네 문장으로 | 틀 문장 「오늘 나는 …에 갔어요. 그런데 ….」 |
 | **Anthropic Claude Opus 5.5** | **긴 이야기** — 7~11쪽 그림책 대본. **카드만 고른 이야기는 미리 만들어 둔 것을 꺼내므로 부르지 않는다** (덧붙임 · 보호자 입력일 때만) | OpenAI `gpt-5.4-mini` → 그것도 안 되면 틀 문장 그림책 |
 | OpenAI `omni-moderation-latest` | 입력과 만든 문장을 **앞뒤로 두 번** 검사 | 걸리면 이야기를 만들지 않는다 (`CONTENT_BLOCKED`) |
-| **ElevenLabs `eleven_v4`** 또는 OpenAI `gpt-4o-mini-tts` | 이야기 낭독 mp3 (`TTS_PROVIDER`). 인물 목소리 판은 `text-to-dialogue` | 음성 없이 성공. 브라우저 음성으로 읽는다 |
+| **ElevenLabs `eleven_v4_turbo`** 또는 OpenAI `gpt-4o-mini-tts` | 이야기 낭독 mp3 (`TTS_PROVIDER`). 인물 목소리 판은 `text-to-dialogue` | 음성 없이 성공. 브라우저 음성으로 읽는다 |
 | 카카오 · 구글 OAuth | 보호자·교사 로그인 (선택) | 비회원으로 쓴다 |
 | **VARCO Sound** (NC AI) | **효과음 파일을 미리 만들 때만 쓴다.** 서비스가 돌 때는 부르지 않는다 | 효과음 없이 진행 |
 | 브라우저 음성 인식 (Web Speech API) | S-07 말로 덧붙이기 (어른이 켰을 때만) | 카드만으로 진행 |
