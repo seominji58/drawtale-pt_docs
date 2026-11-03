@@ -116,28 +116,32 @@ flowchart LR
 | AI | drawtale-ai `docker compose up` (torchserve + ai). 백엔드 `AI_USE_MOCK=true`면 AI 없이도 돈다 |
 | 확인된 것 | 실제 모델로 S-01~S-11이 끝까지 돈다 (2026-09-29) |
 
-### 3.2 목표 배포 구성 (Azure, 아직 배포 전)
+### 3.2 실제 배포 구성 (2026-11-02 ~, https://www.drawtale.kr)
 
 ```mermaid
 flowchart LR
-    U["사용자 브라우저"] --> SWA["Azure Static Web Apps<br/>Frontend"]
-    U -- "HTTPS" --> VM
-    subgraph VM["Azure VM 16GB RAM급 (한 대)"]
-        BEC["backend 컨테이너<br/>공개 포트"]
-        AIC["ai 컨테이너<br/>+ torchserve<br/>내부 Docker 네트워크만"]
+    U["사용자 브라우저"] -- "HTTPS" --> C
+    GH["GitHub Actions<br/>브랜치 푸시"] -. "테스트 통과 시<br/>배포 키(SSH)" .-> VM
+    subgraph VM["Azure VM D2s_v4 · 2코어 8GB (한 대)"]
+        C["caddy<br/>80 · 443 · 화면 파일"]
+        BEC["backend"]
+        PG[("db<br/>postgres")]
+        FS[("파일 볼륨<br/>서명 주소")]
+        AIC["ai + torchserve<br/>내부 네트워크만"]
+        C --> BEC
+        BEC --> PG
+        BEC --> FS
         BEC -- "http://ai:8001" --> AIC
     end
-    BEC --> PG[("PostgreSQL")]
-    BEC --> BLOB[("Azure Blob Storage<br/>uploads / results / models")]
-    COLAB["Colab Pro<br/>A2 학습"] -. "학습된 모델 파일만" .-> BLOB
+    BEC --> EXT["OpenAI · Anthropic · ElevenLabs"]
 ```
 
-- **저장소 3개(Frontend · Backend · AI)를 유지**하고, 물리 서버는 한 대에서 컨테이너를 나눈다. 비용을 줄이되 Docker 이미지와 API 계약이 분리되어 있어 나중에 서버를 쉽게 나눌 수 있다
-- 16GB는 서버 전체 메모리다. OS·Docker·Backend·AI가 함께 쓴다. 컨테이너별 상한은 실측으로 정한다 (예: Backend 2GB, AI 11~12GB)
-- **AI 컨테이너는 외부에 공개하지 않는다.** 백엔드만 내부 네트워크로 부른다
-- 올린 그림, 결과물, 모델 파일은 컨테이너 디스크가 아니라 영구 저장소(Blob)에 둔다
+- **저장소 3개(Frontend · Backend · AI)를 유지**하고, 물리 서버는 한 대에서 컨테이너를 나눈다. Docker 이미지와 API 계약이 분리되어 있어 나중에 서버를 쉽게 나눌 수 있다
+- **화면 · DB · 파일도 VM 안에 둔다.** Static Web Apps · Azure DB · Blob 을 따로 만들지 않아 학생 크레딧을 VM 에만 쓴다. 파일은 Blob SAS 처럼 서명 · 기한이 있는 주소로만 연다
+- **AI 컨테이너는 외부에 공개하지 않는다.** 바깥에 열린 것은 caddy(80 · 443)와 SSH(키로만)뿐이다
+- backend `dev` · frontend `feat/backend-contract` · ai `dev` 에 푸시하면 테스트 · 빌드 뒤 VM 에 자동으로 올라간다
+- VM 은 **쓸 때만 손으로 켜고 끈다** (크레딧). 자세한 것은 [11 서버 아키텍처](11-server-architecture.md)
 - GPU 서버를 따로 둘지는 학습 여부가 아니라 **실제 추론 지연 · 최대 메모리 · 동시 요청 성능**으로 정한다
-- Blob 저장소 코드는 설정 자리(`STORAGE_BACKEND`, `AZURE_STORAGE_CONNECTION_STRING`)만 있고 아직 구현되지 않았다
 
 ---
 
@@ -473,10 +477,10 @@ Backend 가 그것을 아이가 읽을 수 있는 말로 옮긴다. 내부 사�
 
 | 항목 | 지금 | 정할 것 |
 |---|---|---|
-| Azure 배포 | 로컬만 | VM 사양, 도메인, HTTPS, 배포 순서 |
+| 크레딧 뒤 서버 | 학생 크레딧으로 Azure VM 한 대 (11-02 배포) | 상시 운영하려면 저가 VPS 로 옮길지 |
 | AI에 파일 전달 | multipart 직접 전송 | URL(Blob)로 줄지 — 파일이 커지면 재검토 |
 | Job 실행 | FastAPI `BackgroundTasks` (백엔드 프로세스 안) | 백엔드를 다시 켜면 진행 중 Job이 사라진다. 큐(예: 별도 워커)를 둘지 |
-| AI 세션 보관 | AI 서버 디스크, 만료 규칙 없음 | 보관 기간, 이야기 생성 후 정리 |
+| AI 세션 보관 | AI 서버 디스크, **24시간 뒤 지운다** (11-02) | 이야기를 만든 직후 바로 지울지 |
 | 비회원 자료를 계정으로 옮기기 | 비회원으로 만든 그림 · 이야기는 주인이 없다 | 로그인했을 때 그전 것을 계정에 붙일지 |
 | 신뢰도 기준값 | Meta 예제 그림으로 정함 | 아동 그림으로 재측정 (`06` 3장) |
 | 동시 요청 | 측정 전 | 한 서버에서 렌더를 몇 개까지 동시에 돌릴 수 있는지, 그때 메모리가 얼마나 드는지, 한 명이 얼마나 기다리게 되는지. **교실에서 스무 명이 함께 쓰는 상황**이 기준이다 |

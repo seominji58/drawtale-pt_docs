@@ -2,9 +2,9 @@
 
 | 항목 | 내용 |
 |---|---|
-| 문서 버전 | v0.1 (초안) |
-| 기준일 | 2026-10-13 |
-| 기준 코드 | 세 저장소의 `Dockerfile` · `docker-compose.yml` |
+| 문서 버전 | v0.2 |
+| 기준일 | 2026-11-03 |
+| 기준 코드 | backend `deploy/` (`docker-compose.prod.yml` · `Caddyfile` · `remote-deploy.sh`) · 세 저장소의 `Dockerfile` · `.github/workflows/` |
 
 > **이 문서는 무엇인가**
 >
@@ -12,12 +12,12 @@
 > 큰 그림은 [02 시스템 아키텍처 3장](02-system-architecture.md)에 있고,
 > 여기는 컨테이너 · 네트워크 · 올리는 절차를 한 겹 더 들어갑니다.
 >
-> **아직 Azure 에 올리지 않았습니다.** 지금은 각자 로컬에서 돌립니다.
-> 6장의 절차는 **해 보지 않은 초안**입니다.
+> **2026-11-02 에 실제로 올렸습니다 — https://www.drawtale.kr**
+> 명령 하나하나는 `drawtale-backend/deploy/README.md` 에 있습니다.
 
 ---
 
-## 1. 지금 어디서 도나
+## 1. 개발할 때 (각자 PC)
 
 ```
 개발자 PC
@@ -25,7 +25,7 @@
 ├─ Backend  .venv 의 uvicorn   :8000
 ├─ AI       docker compose     :8001   ← ai 컨테이너
 │            └ torchserve      :8080   (디버그용으로만 열어 둠)
-└─ DB       Azure PostgreSQL          ← 팀이 함께 쓰는 하나
+└─ DB       로컬 postgres:16   :5433
 ```
 
 | 어디 | 무엇으로 | 포트 |
@@ -34,23 +34,25 @@
 | Backend | `.venv` 의 `uvicorn`, 또는 `docker compose --profile app up` | 8000 |
 | AI 서버 | Docker (`ai` 컨테이너) | 8001 |
 | 모델 서버 | Docker (`torchserve` 컨테이너) | 8080 |
-| DB | **Azure Database for PostgreSQL** (팀 공용) 또는 로컬 `postgres:16` | 5432 / 로컬 5433 |
-| 파일 | 로컬 디스크 `./storage` → `/files` 로 내보냄 | — |
+| DB | 로컬 `postgres:16` (`docker compose up -d db`) | 5433 |
+| 파일 | 로컬 디스크 `./storage` → 서명이 붙은 `/files` 주소로 내보냄 | — |
 
 > **포트를 `127.0.0.1` 에 묶어 둡니다.** `docker-compose.yml` 의 포트가
 > `127.0.0.1:8001:8001` 처럼 적혀 있어, **같은 PC 에서만** 닿습니다.
-> 같은 공유기에 있는 다른 기기에서도 보이지 않습니다.
 
-**로컬 DB 는 5433 으로 내보냅니다.** PC 에 PostgreSQL 이 이미 깔려 있으면 5432 가 겹치기 때문입니다.
+> **팀 공용 DB(`psql-drawtale`)는 지금 쓸 수 없습니다 (2026-11-02).**
+> 공용 DB 와 Blob(`stdrawtale`)이 있던 구독 `Azure subscription 1` 의 크레딧이 만료돼 「사용 안 함」이 됐습니다.
+> 개발은 로컬 DB 로 합니다. 그 구독에서 **「업그레이드」를 누르면 카드 결제가 시작됩니다.**
 
-## 2. 컨테이너 네 개
+## 2. 컨테이너
 
-| 컨테이너 | 바탕 이미지 | 무엇이 들어 있나 | 이미지 크기 | 메모리 (실측 최대) |
+| 컨테이너 | 바탕 이미지 | 무엇이 들어 있나 | 이미지 크기 | 메모리 (실측) |
 |---|---|---|---|---|
-| `backend` | `python:3.11-slim` | FastAPI · Alembic | 343MB | 수백 MB |
-| `ai` | `python:3.10-slim-bookworm` | FastAPI · OpenCV · PyOpenGL · **Meta 렌더 코드** | 1.67GB | **1.1GB** (쉴 때 80MB) |
-| `torchserve` | `continuumio/miniconda3` | Python **3.8.13** · PyTorch 2.0 (**CPU 전용**) · 모델 2개 | 5.84GB | **1.9GB** |
-| `db` | `postgres:16` | 로컬 개발용. **배포에서는 Azure DB 를 씁니다** | — |
+| `caddy` | `caddy:2.8-alpine` | HTTPS · 화면 파일 · API 앞단 | — | 16MB |
+| `backend` | `python:3.11-slim` | FastAPI · Alembic | 452MB | 180MB 안팎 |
+| `db` | `postgres:16` | 서비스 DB | — | 50MB 안팎 |
+| `ai` | `python:3.10-slim-bookworm` | FastAPI · OpenCV · PyOpenGL · **Meta 렌더 코드** | 1.68GB | **1.1GB** (쉴 때 170MB) |
+| `torchserve` | **`python:3.8.13-bullseye`** | PyTorch 2.0 (**CPU 전용**) · 모델 2개 | 5.54GB | **1.9GB** |
 
 ### 왜 이렇게 나눴나
 
@@ -64,154 +66,158 @@
 
 | 무엇 | 왜 |
 |---|---|
-| **PyTorch 는 CPU 전용으로** | 목표 VM 에 GPU 가 없습니다. 기본 설치는 CUDA 를 4.5GB 더 받아 **이미지가 32GB** 까지 커집니다 |
-| **Debian 저장소를 날짜로 고정** | Meta 원본이 쓰는 bullseye 저장소가 만료돼 빌드가 깨집니다 (snapshot 으로 고정) |
+| **PyTorch 는 CPU 전용으로** | VM 에 GPU 가 없습니다. 기본 설치는 CUDA 를 4.5GB 더 받아 **이미지가 32GB** 까지 커집니다 |
+| **`torchserve` 는 conda 를 쓰지 않습니다** (11-02) | conda 저장소가 바뀌어 옛 miniconda 로는 python 3.8 을 깔 수 없게 됐습니다. 공식 `python:3.8.13` 이미지로 바꿨습니다 |
+| **Debian 저장소를 날짜로 고정** | bullseye 저장소가 만료돼 빌드가 깨집니다 (snapshot 으로 고정) |
 | `libosmesa6` 를 넣습니다 | 화면이 없는 서버에서 OpenGL 로 그리기 때문입니다 |
 | `ffmpeg` 를 넣습니다 | OpenCV 가 H.264 를 만들지 못합니다 ([12 4장](12-ai-architecture.md)) |
-| **Mixamo 동작 파일은 저장소에 없습니다** | 재배포 금지라 `.gitignore` 에 넣고 **이미지를 만들 때 넣습니다** ([08](08-tech-stack.md)) |
 | 컨테이너는 `appuser` 로 돕니다 | `root` 로 돌리지 않습니다 |
 
-## 3. 목표 구성 (Azure, 아직 올리지 않음)
+## 3. 실제 구성 (2026-11-02 ~)
 
 ```
 사용자 브라우저
-   │
-   ├── HTTPS ──→  Azure Static Web Apps        (프론트 정적 파일)
-   │
-   └── HTTPS ──→  Azure VM (16GB 급, 한 대)
-                   ├ backend 컨테이너   ← 바깥에 열린 유일한 것
-                   ├ ai 컨테이너        ← Docker 내부망만
-                   └ torchserve 컨테이너 ← Docker 내부망만
-                        │
-                        ├──→ Azure Database for PostgreSQL
-                        └──→ Azure Blob Storage (uploads / results)
+   │ HTTPS
+   ▼
+Azure VM  drawtale-vm (20.196.129.38)  ── 바깥에 열린 것은 80 · 443 · 22
+   └ caddy ─┬─ www.drawtale.kr  → 화면 파일 (deploy/www)
+            ├─ drawtale.kr      → www 로 이동
+            └─ api.drawtale.kr  → backend ─┬─ db (postgres, 볼륨)
+                                           ├─ 파일 (볼륨, 서명 주소)
+                                           └─ ai ─ torchserve
+                                    backend ──→ OpenAI · Anthropic · ElevenLabs
 ```
+
+| 항목 | 값 |
+|---|---|
+| 구독 | **Azure for Students** (학생 크레딧 약 13만 원, 2027-09-28 만료) |
+| VM | `rg-drawtale-prod` / `drawtale-vm`, Korea Central, **Standard_D2s_v4 (2코어 · 8GB)**, 표준 SSD 64GB, Ubuntu 24.04 |
+| 도메인 | `drawtale.kr` (가비아). DNS A 레코드 `@` · `www` · `api` → VM IP |
+| HTTPS | Caddy 가 Let's Encrypt 인증서를 자동으로 받고 갱신합니다 |
+| 화면 | **Static Web Apps 를 쓰지 않습니다.** Caddy 가 빌드 결과를 함께 줍니다 (리소스 하나 덜, `drawtale.kr` 도 쓸 수 있음) |
+| DB · 파일 | **VM 안에 둡니다** (Azure DB · Blob 을 따로 만들지 않음). 크레딧을 VM 에만 쓰려고 |
+
+### 왜 2코어 · 8GB 인가
 
 | | |
 |---|---|
-| 서버 대수 | **한 대.** 비용을 줄이려고 컨테이너로 나눕니다 |
-| 메모리 | OS · Docker · Backend · AI 가 함께 씁니다 |
-| 컨테이너별 상한 | **쟀습니다** — 아래 |
+| 메모리 | 다섯 컨테이너 합쳐 실측 **3.5GB 안팎** (쉴 때). 8GB 면 여유가 있습니다 |
+| 크레딧 | 4코어는 학생 크레딧이 한 달도 안 갑니다 |
+| 크기 이름 | `D2s_v5` 는 이 구독 · 지역에서 용량이 없어 막혀 `D2s_v4`(값 같음)를 골랐습니다 |
+| 렌더 | 2코어라 PC 보다 느립니다. **여러 명이 동시에 쓸 때는 아직 재지 않았습니다** |
 
-### 메모리를 재 봤습니다 (2026-10-13)
+### 비용 · 켜고 끄기
 
-운영용 구성으로 로컬에서 끝까지 돌려 **최대 사용량**을 쟀습니다.
-
-| 컨테이너 | 최대 | 상한을 이렇게 둡니다 |
+| VM 상태 | 사이트 | 크레딧 |
 |---|---|---|
-| `ai` | 1,089 MiB | 2GB |
-| `torchserve` | 1,895 MiB | **3GB** (전에 8GB 로 잡았는데 과했습니다) |
-| `backend` | 수백 MB | 1GB |
-| **합계** | **약 3GB** | |
+| 실행 중 | 열림 | VM 시간당 $0.118 + 디스크 · IP |
+| **중지됨(할당 취소됨)** | **닫힘** | 디스크 · IP 만 (하루 $0.3 안팎) |
 
-> **16GB 가 아니어도 될 수 있습니다.** 셋이 합쳐 3GB 안팎입니다.
-> 이미지 빌드에 디스크가 필요하고(torchserve 5.84GB) 동시 사용자가 늘면
-> 달라지므로 여유는 둬야 하지만, **8GB 급도 후보입니다.** 비용이 절반으로 줄어듭니다.
->
-> 그림 한 장 · 동작 하나로 잰 값입니다. **여러 명이 동시에 쓸 때를 재야 확정됩니다.**
+- 24시간 켜면 **약 35일**, 하루 8시간이면 **약 75~80일** 에 크레딧이 끝납니다 (디스크 · IP 단가는 추정)
+- **지금은 쓸 때만 손으로 켜고 끕니다.** 포털 `drawtale-vm` → 「시작」 / 「중지」. VM 안에서 `shutdown` 으로 끄면 요금이 계속 나갑니다
+- 다시 켜면 Docker 와 컨테이너가 스스로 올라옵니다 (`restart: unless-stopped`). 2~3분
+- 크레딧이 끝나면 결제되지 않고 **VM 이 멈춥니다.** 「업그레이드」를 누를 때만 결제됩니다
 
 ## 4. 무엇을 바깥에 여나
 
 | 무엇 | 바깥에서 닿나 | 왜 |
 |---|---|---|
-| 프론트 (Static Web Apps) | **열림** | 사용자가 봅니다 |
-| `backend` | **열림** (HTTPS) | 화면이 부릅니다 |
-| `ai` | **닫힘** | Backend 만 `http://ai:8001` 로 부릅니다 |
-| `torchserve` | **닫힘** | AI 서버만 부릅니다 |
-| Azure DB | **IP 로 제한** | 등록한 주소에서만 닿습니다 |
-| Blob | 파일마다 **시간 제한 주소**(SAS, 2시간) | 주소를 알아도 시간이 지나면 못 봅니다 |
+| `caddy` (80 · 443) | **열림** | 화면과 API 의 유일한 입구 |
+| SSH (22) | **열림 · 키로만** | 비밀번호 로그인은 꺼져 있습니다. GitHub Actions 가 그때그때 다른 IP 로 들어와 IP 로 막지 못합니다 |
+| `backend` · `db` | **닫힘** | caddy · backend 만 안쪽에서 부릅니다 |
+| `ai` · `torchserve` | **닫힘** | **AI 서버에는 로그인 검사가 없습니다** ([12 2장](12-ai-architecture.md)) |
+| 파일 `/files` | 서명 · 기한이 맞는 주소만 | Blob SAS 와 같은 규칙. 주소 경로만 알아서는 열리지 않습니다 |
 
-> **AI 서버에는 로그인 검사가 없습니다.** 안쪽에서만 부른다고 전제하고 만들었습니다.
-> **바깥에 열면 누구나 영상을 만들 수 있습니다** ([12 2장](12-ai-architecture.md)).
-> 올릴 때 **포트를 열지 않았는지 반드시 확인해야 합니다.**
+**바깥에서 확인했습니다 (11-02):** 8000 · 8001 · 8080 · 5432 모두 닿지 않음.
+`python deploy/check_live.py` 보안 점검 **18 / 18 통과** — 보안 헤더 · HSTS · CSP · API 문서 닫힘 · 서명 없는 파일 거부 · CORS.
 
-**허용할 주소(CORS)는 Backend 설정에 적습니다** (`cors_origins`, 지금은 `http://localhost:5173`).
-배포하면 프론트 주소로 바꿔야 합니다.
-
-### 팀 공용 DB 를 쓸 때
-
-| | |
-|---|---|
-| 방화벽 | **각자의 IP 를 등록**해야 닿습니다. 학교 · 집에서 주소가 바뀌면 다시 등록합니다 |
-| 조심할 것 | **하나를 함께 씁니다.** 표를 지우거나 되돌리면 팀원 작업이 날아갑니다 |
-| 시험은 | **공용 DB 를 건드리지 않습니다.** 임시 SQLite 를 씁니다 ([CONTRIBUTING](CONTRIBUTING.md)) |
+**CORS 는 `https://www.drawtale.kr` 하나만** 허용합니다 (`.env.prod` 의 `CORS_ORIGINS`).
 
 ## 5. 비밀값은 어디에 두나
 
 | 무엇 | 어디에 |
 |---|---|
-| DB 주소 · OpenAI 키 · 카카오 · 구글 비밀값 · Blob 연결 문자열 | **Backend 의 `.env` 에만** |
+| 앱 비밀값 (API 키 · 카카오 · 구글 · 파일 서명 키) | VM `~/drawtale/drawtale-backend/deploy/.env.prod` (권한 600) |
+| DB 비밀번호 | VM `deploy/.env` (compose 가 읽음) |
 | 저장소에 올리나 | **올리지 않습니다.** `.gitignore` 에 있습니다 |
-| 프론트에는 | **아무 키도 두지 않습니다.** 화면은 업체 이름을 모릅니다 |
-| 배포 서버에서는 | VM 의 `.env` 또는 Azure 쪽 설정값으로 넣습니다. **아직 정하지 않았습니다** |
+| 프론트에는 | **아무 비밀도 두지 않습니다.** 카카오 · 구글 client id 같은 공개값만 빌드 때 넣습니다 |
+| 사람이 VM 에 들어가는 키 | 팀장 PC 의 `.pem`. 저장소 · 채팅에 올리지 않습니다 |
+| GitHub Actions 배포 키 | 세 저장소의 Actions Secrets. VM 에서는 **`~/remote-deploy.sh` 만** 돌 수 있게 묶었습니다 (`authorized_keys` 의 `command=`) |
 
-## 6. 올리는 절차
+**Key Vault 같은 비밀 관리 서비스는 쓰지 않습니다.** 서버가 한 대라 파일로 충분합니다. 서버가 늘거나 사람마다 권한을 나눠야 할 때 다시 봅니다.
 
-**명령과 설정 파일은 `drawtale-backend/deploy/` 에 있습니다** —
-`docker-compose.prod.yml` · `Caddyfile` · `.env.prod.example` · `README.md`(절차).
+**환경변수만 바꿀 때는 다시 빌드하지 않습니다:** `.env.prod` 를 고치고 `docker compose -f docker-compose.prod.yml up -d backend`. 프론트의 `VITE_*` 값은 화면을 다시 빌드해야 합니다.
 
-| 운영 구성에서 정한 것 | 왜 |
-|---|---|
-| **`ai` · `torchserve` 는 포트를 열지 않습니다** (`expose` 만) | AI 서버에 로그인 검사가 없습니다. **로컬에서 닫힌 것을 확인했습니다** |
-| **Caddy** 를 앞에 세웁니다 | HTTPS 인증서를 자동으로 받습니다. **타임아웃을 2분**으로 (렌더는 8초지만 여유를 둡니다) |
-| VM 에 두 저장소를 나란히 받습니다 | 레지스트리를 쓰지 않아 단계가 줄어듭니다 |
-
-아래는 처음 적어 둔 큰 순서입니다.
-
-
+## 6. 올리는 방법 — 브랜치에 푸시하면 자동
 
 ```
-① 이미지를 만든다       docker compose build
-② VM 에 올린다          (레지스트리를 쓸지 압축해 보낼지 미정)
-③ .env 를 넣는다        비밀값은 저장소에 없다
-④ DB 를 맞춘다          alembic upgrade head
-⑤ 띄운다               docker compose up -d
-⑥ 확인한다             아래 7장
-⑦ 프론트를 올린다       Static Web Apps 에 빌드 결과를 배포
+팀원이 커밋 · 푸시
+      ↓ (여기부터 자동, GitHub Actions)
+테스트 / 빌드 ── 실패하면 멈춤, 사이트는 그대로
+      ↓ 통과
+VM 으로 코드(tar)를 보냄 → ~/remote-deploy.sh 가 반영
+      ↓
+www.drawtale.kr 갱신
 ```
 
-| 단계 | 아직 정하지 않은 것 |
-|---|---|
-| ② | **이미지를 어떻게 보낼지.** Azure Container Registry 를 쓸지, VM 에서 직접 빌드할지 |
-| ③ | 비밀값을 VM 에 어떻게 넣을지 |
-| ④ | 마이그레이션을 **누가 언제** 돌릴지. 지금은 손으로 돕니다 |
-| ⑦ | 도메인과 HTTPS 인증서 |
+| 저장소 | 이 브랜치에 푸시하면 | 하는 일 |
+|---|---|---|
+| backend | `dev` | `pytest` → `backend` · `db` · `caddy` 다시 만들기, 카드 이야기 씨앗 |
+| frontend | `feat/backend-contract` · `dev` | `npm run build`(타입 검사 포함) → `deploy/www` 바꾸기 |
+| ai | `dev` | `ai` · `torchserve` 다시 만들기 (안 바뀐 단계는 캐시) |
 
-> **`torchserve` 이미지를 만드는 데 오래 걸립니다** (conda · mmcv · 모델 내려받기).
-> VM 에서 직접 빌드하면 몇십 분이 걸릴 수 있습니다. **미리 재어 봐야 합니다.**
+| 정한 것 | 왜 |
+|---|---|
+| **PR 은 테스트 · 빌드만** | 다른 사람 코드가 배포 키로 VM 에 닿지 않게 |
+| 레지스트리를 쓰지 않고 **VM 에서 빌드** | 단계가 적고 비용이 없습니다. `ai` 저장소가 비공개라 VM 이 직접 받지 않고 Actions 가 코드를 보냅니다 |
+| 마이그레이션은 **backend 가 뜰 때마다** `alembic upgrade head` | DB 가 서비스 전용이라 팀 공용 DB 걱정이 없습니다 |
+| 세 저장소가 동시에 올라와도 **하나씩** | `flock` 으로 줄을 세웁니다 |
+
+> **`main` 은 배포하지 않습니다.** 앞으로도 위 세 브랜치로 작업한다고 정했습니다 (11-03).
+> **VM 이 꺼져 있으면 배포가 실패합니다.** 켠 뒤 GitHub Actions 에서 그 실행을 「Re-run」 합니다.
 
 ## 7. 돌아가는지 어떻게 확인하나
 
 | 무엇 | 어떻게 |
 |---|---|
-| Backend | `GET /health` |
-| AI 서버 | `GET /internal/v1/health` — **모델이 올라왔는지**까지 알려 줍니다 |
-| 모델 서버 | `GET :8080/ping` (compose 가 이걸로 기다립니다) |
-| 순서 | `ai` 는 `torchserve` 가 **건강해진 뒤에** 뜹니다 (`depends_on`) |
+| 실제 사이트 전체 | **`python deploy/check_live.py`** — 아무 PC 에서. 돈이 드는 요청은 보내지 않습니다 |
+| Backend | `GET https://api.drawtale.kr/health` |
+| AI 서버 | VM 안에서 `GET /internal/v1/health` — 모델이 올라왔는지까지 (배포 스크립트가 기다렸다 확인) |
+| 순서 | `ai` 는 `torchserve` 가, `backend` 는 `db` 가 **건강해진 뒤에** 뜹니다 (`depends_on`) |
 
-**기록(로그)은 컨테이너 표준 출력으로 나갑니다.** 모으는 곳이 따로 없어
-`docker compose logs` 로 봅니다. 컨테이너를 지우면 사라집니다.
+**실제로 해 본 것 (11-02):** 그림 분석 4.5초 · 이야기 한 편(음성 · 영상 포함) 30초, API 로 끝까지 성공.
+**브라우저에서 카카오 · 구글 로그인은 아직 확인하지 않았습니다.**
+
+**기록(로그)은** `docker compose logs` 로 봅니다. 따로 모으지 않아 컨테이너를 지우면 사라집니다.
+
+## 8. 백업
+
+| 무엇 | 어떻게 |
+|---|---|
+| DB | VM cron 이 **매일 03:00(한국)** `pg_dump` → `~/backups` 에 **7일치** (`deploy/backup.sh`) |
+| 그림 · 영상 파일 | **백업하지 않습니다** |
+
+> **백업이 같은 VM 디스크에 있습니다.** 잘못된 마이그레이션 · 실수로 지운 자료는 되살리지만,
+> VM 이나 디스크가 사라지면 함께 사라집니다.
 
 ---
 
-## 8. 지금 아픈 곳
+## 9. 지금 아픈 곳
 
 | 무엇 | 내용 |
 |---|---|
-| **한 번도 올려 보지 않았다** | 6장은 **종이 위의 절차**입니다. 해 보면 빠진 것이 나올 것입니다 |
-| **메모리 상한을 모른다** | 16GB 에 다 들어가는지 **재지 않았습니다** |
-| **AI 포트를 실수로 열 위험** | 로컬 compose 는 8001 · 8080 을 내보냅니다. 배포에서 그대로 쓰면 안 됩니다 |
+| **크레딧이 끝나면 멈춘다** | 학생 크레딧만으로 돕니다. 24시간이면 약 35일. 상시 운영하려면 저가 VPS 로 옮기는 것을 다시 봐야 합니다 |
+| **백업이 같은 디스크** | VM 이 사라지면 DB 백업도 없습니다. 파일은 백업이 없습니다 |
+| **동시 사용을 재지 않았다** | 2코어에서 렌더가 몇 개까지 버티는지 모릅니다 ([02 9장](02-system-architecture.md)) |
 | 기록을 모으지 않는다 | 컨테이너를 지우면 로그가 없어집니다 |
-| 파일 저장소가 로컬 | 지금은 디스크에 씁니다. **컨테이너를 지우면 올린 그림이 사라집니다.** Blob 으로 옮겨야 합니다 |
-| 백업이 없다 | DB 와 Blob 을 백업하지 않습니다 |
+| SSH 가 모든 IP 에 열려 있다 | 키로만 들어옵니다. 자동 배포 때문에 IP 로 막지 못합니다 |
+| 공용 개발 DB 가 없다 | 구독 만료. 각자 로컬 DB 를 씁니다 |
 
-## 9. 아직 정하지 않은 것
+## 10. 아직 정하지 않은 것
 
 | 무엇 | 지금 |
 |---|---|
-| VM 사양 | 16GB 급이라는 것만. **고르지 않았습니다** |
-| 도메인 · HTTPS | 정하지 않았습니다 |
-| 이미지를 보내는 방법 | 레지스트리 대 직접 빌드 |
+| 크레딧 뒤 | VPS 로 옮길지 · 언제 |
+| 백업을 바깥에 | Blob 등 다른 곳에 둘지 |
 | 멈췄을 때 | 대응 절차가 없습니다 ([01](01-requirements.md)) |
-| 외부 비용이 한도를 넘으면 | 멈출지 계속할지 정하지 않았습니다 |
-| 백업 · 되돌리기 | 정하지 않았습니다 |
+| 외부 비용이 한도를 넘으면 | 하루 이야기 한도는 넣었다(백엔드 d0bcdb5). 업체 쪽 한도는 각 콘솔에서 따로 |
